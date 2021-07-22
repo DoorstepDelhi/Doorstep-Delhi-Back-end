@@ -28,7 +28,7 @@
 
         chatSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
-            document.querySelector('#chat-log').value += (data.message + '\n');
+            document.querySelector('#chat-log').value += (data.message_text + '\n');
         };
 
         chatSocket.onclose = function(e) {
@@ -46,7 +46,7 @@
             const messageInputDom = document.querySelector('#chat-message-input');
             const message = messageInputDom.value;
             chatSocket.send(JSON.stringify({
-                'user': '{{ request.user.id }}',
+                'user': {{ request.user.id }},
                 'room': {{ room.id }},
                 'message_text': message
             }));
