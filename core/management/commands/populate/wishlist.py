@@ -24,7 +24,7 @@ def populate_wishlist():
                 [
                     WishlistItem(
                         wishlist=wishlist,
-                        product=products[fake.random_int(min=min(0, products.count() - 1), max=min(20, products.count() - 1))],
+                        product=products[i],
                     )
                 ]
             )

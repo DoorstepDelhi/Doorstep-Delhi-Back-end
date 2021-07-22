@@ -12,7 +12,7 @@ router.register("user-orders", views.UserOrderLineViewSet, basename="user-orders
 
 
 urlpatterns = [
-    # path('', views.index, name='index'),
+    path('chat/', views.index, name='index'),
     path("", include(router.urls)),
     path('<str:room_name>/', views.room, name='room'),
 

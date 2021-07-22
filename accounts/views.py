@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from accounts.permissions import IsOwnerOrAdmin
+from room.models import Room
+from room.serializers import RoomListSerializer
 
 
 class AddressViewSet(viewsets.ModelViewSet):
@@ -60,13 +62,20 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated,], name="Contacts")
+    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated,], name="Nearby People")
     def nearby(self, request, *args, **kwargs):
         # longitude = request.data['long']
         # latitude = request.data['lat']
         users = User.objects.all()[:20]
-        print("------------ Here ----------")
         serializer = UserSerializer(users, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated,], name="Nearby Groups")
+    def nearby(self, request, *args, **kwargs):
+        # longitude = request.data['long']
+        # latitude = request.data['lat']
+        rooms = Room.objects.all()[:20]
+        serializer = RoomListSerializer(rooms, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["get"], permission_classes=[IsAuthenticated,], name="User Default Shipping Address")
