@@ -5,12 +5,14 @@ from rest_framework import serializers, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from room.serializers import MessageSerializer, RoomOrderSerializer, RoomSerializer, RoomListSerializer, RoomUserSerializer, \
+from room.serializers import MessageSerializer, RoomOrderSerializer, RoomSerializer, RoomListSerializer, \
+    RoomUserSerializer, \
     RoomWishlistProductSerializer, RoomOrderLineSerializer, RoomLastMessageSerializer, Message
 from shop.models import OrderEvent
 from django.db.models import Q, F
 
 from .pagination import CustomPagination
+
 
 def index(request):
     return render(request, 'room/index.html', {})
@@ -29,16 +31,17 @@ class RoomViewset(viewsets.ModelViewSet):
     serializer_class = RoomLastMessageSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = CustomPagination
-    
+
     def get_queryset(self):
         rooms = Room.objects.all()
         if not self.request.user.is_superuser:
-            rooms = Room.objects.filter(users=self.request.user, room_users__role__in=["A", "U"], room_users__left_at=None, deleted_at=None)
+            rooms = Room.objects.filter(users=self.request.user, room_users__role__in=["A", "U"],
+                                        room_users__left_at=None, deleted_at=None)
         return rooms
 
     def list(self, request):
         queryset = self.get_queryset()
-        serializer = RoomLastMessageSerializer(queryset, many=True)
+        serializer = RoomListSerializer(queryset, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], name='room-users')
@@ -54,21 +57,18 @@ class RoomViewset(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'], name='room-orders')
-    def room_order(self, request, pk=None):
+    def orders(self, request, pk=None):
         orders = RoomOrder.objects.filter(room__id=pk)
         serializer = RoomOrderSerializer(orders, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'], name='room-orders')
-    def chats(self, request, pk = None):
-        messages  = Message.objects.filter(room__id = 1)
-        messages = messages.order_by("-created_on")
-        serializer = MessageSerializer(messages, many = True)
+    @action(detail=True, methods=['get'], name='room-orders')
+    def chats(self, request, pk=None):
+        room = self.get_object()
+        messages = Message.objects.filter(room=room).order_by("-created_on")
+        serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
-        
-        
 
-    
 
 class RoomWishlistProductViewset(viewsets.ModelViewSet):
     serializer_class = RoomWishlistProductSerializer

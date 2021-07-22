@@ -71,9 +71,10 @@ class RoomLastMessageSerializer(serializers.ModelSerializer):
         return serializer.data
 
     def get_unseen_messages(self, obj):
-        user = self.context.get('request', None)
+        request = self.context.get('request', None)
+        user = request.user
         if user:
-            room_user = RoomUser.objects.filter(user=user, room=obj)
+            room_user = RoomUser.objects.get(user=user, room=obj)
             messages = Message.objects.filter(room=obj, created_on__gte=room_user.viewed_at)
             if messages.exists():
                 return messages.count()
@@ -222,15 +223,18 @@ class InvoiceSerializer(serializers.ModelSerializer):
 
 class MessageSerializer(serializers.ModelSerializer):
     file_field = serializers.FileField(allow_empty_file = True)
-    created_on = serializers.ReadOnlyField()
+    created_on = serializers.SerializerMethodField(read_only=True)
     user = serializers.HiddenField(
         default=serializers.CurrentUserDefault()
     )
+    type = serializers.SerializerMethodField(read_only=True)
+    product = ProductListSerializer()
 
     class Meta:
         model = Message
         fields = [
             "id",
+            "type",
             "file_field",
             "message_text",
             "product",
@@ -238,3 +242,10 @@ class MessageSerializer(serializers.ModelSerializer):
             "created_on",
             "room"
         ]
+
+    @staticmethod
+    def get_type(self):
+        return "send_to_websocket"
+
+    def get_created_on(self, obj):
+        return obj.created_on.strftime("%d %b %Y %H:%M:%S %Z")

@@ -180,7 +180,7 @@ class Message(models.Model):
     user = models.ForeignKey('accounts.User', on_delete=models.CASCADE)
     product = models.ForeignKey('product.Product', on_delete= models.CASCADE, null = True)
     file_field = models.FileField(upload_to='media/Message', blank=True, null=True)
-    message_text = models.CharField(max_length=1000, blank=True)
+    message_text = models.CharField(max_length=1000, blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
