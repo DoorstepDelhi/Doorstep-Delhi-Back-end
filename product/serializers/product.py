@@ -9,10 +9,8 @@ from product.models import (
     Customization,
     Product,
     ProductVariant,
-    WholesaleProductVariant,
     ProductImage,
     VariantImage,
-    WholesaleVariantImage,
     CollectionProduct,
     Collection,
     ProductReview,
@@ -31,7 +29,7 @@ class VariationSerializer(serializers.ModelSerializer):
 class ProductListSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     min_qty = serializers.SerializerMethodField()
-    min_wholesale_price = serializers.SerializerMethodField()
+    min_price = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -41,11 +39,11 @@ class ProductListSerializer(serializers.ModelSerializer):
             "average_rating",
             "image",
             "min_qty",
-            "min_wholesale_price",
+            "min_price",
         ]
 
-    def get_min_wholesale_price(self, obj):
-        return obj.min_wholesale_price
+    def get_min_price(self, obj):
+        return obj.min_price
 
     def get_min_qty(self, obj):
         return obj.lowest_min_qty
@@ -60,31 +58,3 @@ class ProductListSerializer(serializers.ModelSerializer):
             }
             return data
         return None
-
-
-
-class WholesaleProductVariantListSerializer(serializers.ModelSerializer):
-    variant = VariationSerializer()
-    image = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = WholesaleProductVariant
-        fields = [
-            "id",
-            "name",
-            "variant",
-            "image",
-            "min_qty",
-            "per_item_qty",
-            "pack_size",
-            "price",
-            "discounted_price",
-        ]
-
-    def get_image(self, obj):
-        image = obj.images.all()
-        if image.exists():
-            image = image[0]
-            return image.image.url
-        else:
-            return None

@@ -54,12 +54,10 @@ class Order(models.Model):
         decimal_places=settings.DEFAULT_DECIMAL_PLACES,
         default=0,
     )
-
     voucher = models.ForeignKey(
         "shop.Voucher", blank=True, null=True, related_name="+", on_delete=models.SET_NULL
     )
     gift_cards = models.ManyToManyField("shop.GiftCard", blank=True, related_name="orders")
-
     display_gross_prices = models.BooleanField(default=True)
     customer_note = models.TextField(blank=True, default="")
 
@@ -83,18 +81,10 @@ class OrderLine(models.Model):
         blank=True,
         null=True,
     )
-    wholesale_variant = models.ForeignKey(
-        "product.WholesaleProductVariant",
-        related_name='order_lines',
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True
-    )
     quantity = models.IntegerField(validators=[MinValueValidator(1)])
     quantity_fulfilled = models.IntegerField(
         validators=[MinValueValidator(0)], default=0
     )
-    
 
     def increment_quantity_by_one(self,order:order,variant:variant):
         orderline, _is_created = self.items.get(id=id, order=order)

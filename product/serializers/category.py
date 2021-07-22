@@ -8,10 +8,8 @@ from product.models import (
     Customization,
     Product,
     ProductVariant,
-    WholesaleProductVariant,
     ProductImage,
     VariantImage,
-    WholesaleVariantImage,
     CollectionProduct,
     Collection,
     ProductReview,
@@ -23,6 +21,7 @@ from product.serializers.product import ProductListSerializer
 
 class CategoryListSerializer(serializers.ModelSerializer):
     sub_categories = serializers.SerializerMethodField(read_only=True)
+    products = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Category
@@ -36,6 +35,11 @@ class CategoryListSerializer(serializers.ModelSerializer):
     def get_sub_categories(self, obj):
         sub_categories = SubCategory.objects.filter(category=obj)
         serializer = SubCategoryListSerializer(sub_categories, many=True)
+        return serializer.data
+
+    def get_products(self, obj):
+        products = Product.objects.filter(Q(category=obj) | Q(sub_category__category=obj))[:10]
+        serializer = ProductListSerializer(products, many=True)
         return serializer.data
 
 
@@ -54,24 +58,6 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
     def get_sub_categories(self, obj):
         sub_categories = SubCategory.objects.filter(category=obj)
         serializer = SubCategoryDetailSerializer(sub_categories, many=True)
-        return serializer.data
-
-
-class CategoryProductsSerializer(serializers.ModelSerializer):
-    products = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = Category
-        fields = [
-            "id",
-            "name",
-            "icon",
-            "products",
-        ]
-
-    def get_products(self, obj):
-        products = Product.objects.filter(Q(category=obj) | Q(sub_category__category=obj))[:10]
-        serializer = ProductListSerializer(products, many=True)
         return serializer.data
 
 

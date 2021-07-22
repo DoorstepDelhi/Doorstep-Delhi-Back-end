@@ -10,10 +10,10 @@ from store.models import Store, PickupPoint
 
 
 class CustomRegisterSerializer(RegisterSerializer):
-    referral_code = serializers.CharField(allow_blank = True, allow_null=True)
+    referral_code = serializers.CharField(allow_blank=True, allow_null=True)
     first_name = serializers.CharField()
-    last_name = serializers.CharField(allow_blank = True, allow_null=True)
-    email = serializers.EmailField(allow_blank = True, allow_null=True)
+    last_name = serializers.CharField(allow_blank=True, allow_null=True)
+    email = serializers.EmailField(allow_blank=True, allow_null=True)
 
     class Meta:
         model = User
@@ -59,10 +59,10 @@ class TokenSerializer(serializers.ModelSerializer):
 
     def get_username(self, obj):
         return obj.user.username
-    
+
     def get_store_id(self, obj):
         # request = self.context.get('request', None)
-        stores = Store.objects.filter(users__in = [obj.user])
+        stores = Store.objects.filter(users__in=[obj.user])
         if stores.exists():
             store = stores[0]
             return store.id
@@ -80,7 +80,6 @@ class UserSerializer(serializers.ModelSerializer):
             ("small_square_crop", "crop__50x50"),
         ]
     )
-    # addresses = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
@@ -91,7 +90,6 @@ class UserSerializer(serializers.ModelSerializer):
             'last_name',
             'profile_pic',
             'email',
-            # 'addresses',
             'password'
         )
 
@@ -112,7 +110,6 @@ class FullUserSerializer(serializers.ModelSerializer):
     #         ("small_square_crop", "crop__50x50"),
     #     ]
     # )
-    # addresses = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
@@ -122,14 +119,9 @@ class FullUserSerializer(serializers.ModelSerializer):
             'last_name',
             # 'profile_pic',
             'email',
-            # 'addresses',
             'password'
         )
 
-    def get_addresses(self, obj):
-        adresses = Address.objects.filter(user=obj)
-        serializer = AddressSerializer(adresses, many=True)
-        return serializer.data
 
 class AddressSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(
@@ -148,6 +140,7 @@ class AddressSerializer(serializers.ModelSerializer):
             "postal_code",
             "phone",
         ]
+
 
 class FullAddressSerializer(serializers.ModelSerializer):
     user = FullUserSerializer()

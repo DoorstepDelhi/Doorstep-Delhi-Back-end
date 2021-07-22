@@ -1,11 +1,10 @@
 # from product.serializers.product import ProductListSerializer
-from product.models import Category, Product, WholesaleProductVariant
 from rest_framework import serializers
 from rest_framework.fields import CurrentUserDefault
 from datetime import datetime
 from .models import BankAccount, Store, ShippingZone, ShippingMethod
 from accounts.models import Address
-from accounts.serializers import AddressSerializer,AddressSerializer
+from accounts.serializers import AddressSerializer, AddressSerializer
 from accounts.models import Address, User
 
 
@@ -24,7 +23,6 @@ class ShippingMethodSerializer(serializers.ModelSerializer):
 
 
 class ShippingZoneSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = ShippingZone
         fields = [
@@ -34,14 +32,14 @@ class ShippingZoneSerializer(serializers.ModelSerializer):
             'default',
             'description',
         ]
-        
+
 
 class StoreSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
     created_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
-        model = Store 
+        model = Store
         fields = [
             'id',
             'name',
@@ -55,12 +53,13 @@ class StoreSerializer(serializers.ModelSerializer):
             'facebook_link',
             'instagram_link'
         ]
-        
+
+
 class BusinessSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
-        model = Store 
+        model = Store
         fields = [
             'name',
             'email',
@@ -76,7 +75,7 @@ class FullRegisterStoreSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
-        model = Store 
+        model = Store
         fields = [
             'id',
             'name',
@@ -85,6 +84,7 @@ class FullRegisterStoreSerializer(serializers.ModelSerializer):
             'created_at',
             'shipping_zones'
         ]
+
 
 class PickupPointListSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
@@ -121,13 +121,12 @@ class PickupPointSerializer(serializers.ModelSerializer):
             'closing_time',
             'created_at',
         ]
-        
-                
-        
+
+
 class BankAccountSerializer(serializers.ModelSerializer):
     # store = StoreSerializer(read_only =True)
     store = serializers.HiddenField(default=serializers.CurrentUserDefault)
-    
+
     class Meta:
         model = BankAccount
         fields = [
@@ -138,26 +137,3 @@ class BankAccountSerializer(serializers.ModelSerializer):
             'account_type',
             'bank_name'
         ]
-        
-
-
-# class StoreProductListSerializer(serializers.ModelSerializer):
-#     products = serializers.SerializerMethodField()
-    
-
-#     class Meta:
-#         model = Store
-#         fields = [
-#             'name',
-#             'products'
-            
-#         ]
-    
-#     def get_products(self, obj):
-#         wholesale_products = WholesaleProductVariant.objects.filter(store = obj)
-#         product_ids = wholesale_products.values_list('product', flat = True)
-#         products = Product.objects.filter(id__in = product_ids)
-#         print(products)
-#         serializer = ProductListSerializer(products, many=True)
-#         return serializer.data
-        

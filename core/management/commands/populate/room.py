@@ -7,10 +7,11 @@ import random
 
 from room.models import Room, RoomUser
 from accounts.models import User, Address
-from product.models import Product, WholesaleProductVariant
+from product.models import Product, ProductVariant
 from room.models import *
 from shop.choices import order_status_choices, order_event_type_choices
 from store.models import ShippingMethod
+
 
 fake = Faker()
 Faker.seed(999)
@@ -63,21 +64,20 @@ def populate_room_users(room):
 
 def populate_room_wishlist_product(room):
     users = room.users.all()
-    variants = WholesaleProductVariant.objects.all()
+    products = Product.objects.all()
 
     for i in random.sample(
-            range(variants.count()),
-            fake.random_int(min=2, max=min(variants.count(), 10))
+            range(products.count()),
+            fake.random_int(min=2, max=min(products.count(), 10))
     ):
         wishlist_item = RoomWishlistProduct.objects.create(
             room=room,
             user=users[fake.random_int(min=min(0, users.count() - 1), max=min(100, users.count() - 1))],
+            product=products[i],
             added_at=fake.date_time_this_month(),
             votes=fake.random_int(max=users.count()),
-            wholesale_variant=variants[i]
         )
-
-        # populate_wishlist_product_vote(wishlist_item)
+        populate_wishlist_product_vote(wishlist_item)
 
 
 def populate_wishlist_product_vote(wishlist_item):
@@ -115,7 +115,7 @@ def populate_room_order(room):
 
 def populate_room_order_line(room, room_order):
     users = room.users.all()
-    variants = WholesaleProductVariant.objects.all()
+    variants = ProductVariant.objects.all()
 
     for j in random.sample(range(variants.count()), fake.random_int(min=min(variants.count(), 1), max=min(variants.count(), 10))):
         room_order_line = RoomOrderLine.objects.create(

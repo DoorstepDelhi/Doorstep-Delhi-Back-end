@@ -53,8 +53,8 @@ class WishlistConsumer(AsyncJsonWebsocketConsumer):
         action_type = text_data['action_type']
 
         if action_type == "add":
-            self.wholesale_variant_id = int(text_data['wholesale_variant_id'])
-            if await self.add_product_variant(self.wholesale_variant_id):
+            self.product_id = int(text_data['product_id'])
+            if await self.add_product(self.product_id):
                 wishlist_products = await self.get_product_variants()
                 data = RoomWishlistProductSerializer(wishlist_products, many=True).data
             else:
@@ -67,8 +67,8 @@ class WishlistConsumer(AsyncJsonWebsocketConsumer):
                 )
 
         if action_type == "remove":
-            self.wholesale_variant_id = int(text_data['wholesale_variant_id'])
-            if await self.remove_product_variant(self.wholesale_variant_id):
+            self.product_id = int(text_data['product_id'])
+            if await self.remove_product(self.product_id):
                 wishlist_products = await self.get_product_variants()
                 data = RoomWishlistProductSerializer(wishlist_products, many=True).data
 
@@ -141,21 +141,21 @@ class WishlistConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json(event)
 
     @database_sync_to_async
-    def add_product_variant(self, wholesale_variant_id):
-        wishlist_product = RoomWishlistProduct.objects.filter(room=self.room, wholesale_variant__id=wholesale_variant_id)
+    def add_product(self, product_id):
+        wishlist_product = RoomWishlistProduct.objects.filter(room=self.room, product__id=product_id)
         if wishlist_product.exists():
             return False
         else:
             wishlist_product = RoomWishlistProduct.objects.create(
                 room=self.room,
-                user = self.user,
-                wholesale_variant__id=wholesale_variant_id
+                user=self.user,
+                product__id=product_id
             )
         return wishlist_product
 
     @database_sync_to_async
-    def remove_product_variant(self, wholesale_variant_id):
-        wishlist_product = RoomWishlistProduct.objects.filter(room=self.room, wholesale_variant__id=wholesale_variant_id)
+    def remove_product(self, product_id):
+        wishlist_product = RoomWishlistProduct.objects.filter(room=self.room, product__id=product_id)
         if wishlist_product.exists():
             wishlist_product.delete()
         return True

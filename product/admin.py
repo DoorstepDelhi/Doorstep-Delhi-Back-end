@@ -9,10 +9,8 @@ from product.models import (
     Customization,
     Product,
     ProductVariant,
-    WholesaleProductVariant,
     ProductImage,
     VariantImage,
-    WholesaleVariantImage,
     ProductReview,
     ProductReviewFile,
     CollectionProduct,
@@ -56,20 +54,6 @@ class VariantImageInline(nested_admin.NestedTabularInline):
     model = VariantImage
     extra = 0
 
-# VARIANT IMAGE MODEL
-
-
-class WholesaleVariantImageInline(nested_admin.NestedTabularInline):
-    model = WholesaleVariantImage
-    extra = 0
-
-
-class WholesaleProductVariantInline(nested_admin.NestedTabularInline):
-    model = WholesaleProductVariant
-    inlines = [WholesaleVariantImageInline]
-    extra = 0
-
-
 class ProductVariantInline(nested_admin.NestedTabularInline):
     model = ProductVariant
     list_display = ['__all__']
@@ -83,7 +67,6 @@ class ProductInline(nested_admin.NestedTabularInline):
     model = Product
     inlines = [
         ProductVariantInline,
-        WholesaleProductVariantInline,
         ProductImageInline,
         ProductReviewInline,
     ]
@@ -93,7 +76,6 @@ class ProductInline(nested_admin.NestedTabularInline):
 class ProductAdmin(nested_admin.NestedModelAdmin):
     inlines = [
         ProductVariantInline,
-        WholesaleProductVariantInline,
         ProductImageInline,
         ProductReviewInline,
     ]
@@ -214,4 +196,3 @@ admin.site.register(ProductType, ProductTypeAdmin)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Collection, CollectionAdmin)
 admin.site.register(ProductVariant, ProductVariantAdmin)
-admin.site.register(WholesaleProductVariant,)

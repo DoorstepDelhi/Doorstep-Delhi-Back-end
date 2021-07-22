@@ -10,7 +10,8 @@ Faker.seed(999)
 
 def populate_users(N):
     user = User.objects.create_superuser(username='admin', password="admin")
-    for _ in range(10):
+    user = User.objects.create_superuser(username='9999999999', password="admin")
+    for _ in range(2):
         add_superuser()
     for _ in range(N):
         add_user()

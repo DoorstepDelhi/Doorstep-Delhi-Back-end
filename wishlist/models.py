@@ -56,9 +56,6 @@ class WishlistItem(models.Model):
     variants = models.ManyToManyField(
         "product.ProductVariant", related_name="wishlist_items", blank=True
     )
-    wholesale_variants = models.ManyToManyField(
-        "product.WholesaleProductVariant", related_name="wishlist_items", blank=True
-    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

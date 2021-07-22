@@ -239,7 +239,6 @@ class OrderSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            
             'product_name',
             'created',
             'price',
@@ -250,7 +249,6 @@ class OrderSummarySerializer(serializers.ModelSerializer):
             'status',
             'shipping_address',
             'order_events'
-            
         ]
 
     def get_user_name(self,obj):

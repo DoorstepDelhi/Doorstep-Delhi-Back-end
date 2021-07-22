@@ -15,9 +15,6 @@ from room.serializers import RoomOrderLineSerializer
 from accounts.models import Address, User
 from accounts.serializers import FullUserSerializer, AddressSerializer, FullAddressSerializer
 
-from product.models import Product, WholesaleProductVariant
-from product.serializers2 import WholesaleProductVariantSerializer, WholesaleProductVariantSerializer
-
 
 class StoreViewSet(viewsets.ModelViewSet):
     serializer_class = StoreSerializer
@@ -63,14 +60,7 @@ class StoreViewSet(viewsets.ModelViewSet):
         store = self.get_object()
         serializer = BusinessSerializer(store)
         return Response(serializer.data ,status= status.HTTP_200_OK)
-        
-    @action(detail =True , methods=['get', 'post', 'put'], permission_classes=[IsStoreOwner, ])
-    def wholesale_products(self, request, pk, *args, **kwargs):
-        store = self.get_object()
-        products = WholesaleProductVariant.objects.filter(store=store)
-        serializer = WholesaleProductVariantSerializer(products, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-        
+
 
 class ShippingZoneViewSet(viewsets.ModelViewSet):
     serializer_class = ShippingZoneSerializer
@@ -148,30 +138,3 @@ class FullRegister(views.APIView):
             return Response("User, Store, Bank and Address Registered", status=status.HTTP_200_OK)
         else:
             return Response("INVALID User Data")
-
-
-# class StoreProductListViewSet(viewsets.ModelViewSet):
-#     serializer_class = StoreProductListSerializer
-#     permission_classes = [IsAuthenticated]
-#     queryset = Store.objects.all()
-
-
-#     @action(detail=True, methods=["get"], permission_classes=[ ])
-#     def filter_products_category(self, request, pk, *args, **kwargs):
-       
-#        if self.request.query_params.get("category", None):
-#            category = self.request.query_params.get("category", None)
-#            category = kwargs.pop('category')
-#            wholesale_products = WholesaleProductVariant.objects.filter(
-#             product__category=category,
-#             store = self.get_object()
-#             )
-#            serializer = WholesaleProductVariantSerializer(wholesale_products, many=True)
-#            return Response(serializer.data, status=status.HTTP_200_OK)
-           
-        
-        
-       
-
-   
-    

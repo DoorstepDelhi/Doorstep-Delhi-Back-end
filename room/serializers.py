@@ -3,9 +3,10 @@ from shop.serializers import OrderSerializer
 from typing import AsyncContextManager
 from rest_framework import serializers
 from room.models import Message, Room, RoomRecommendedProduct, RoomUser,RoomWishlistProduct,WishlistProductVote,RoomOrder, RoomOrderLine, UserOrderLine, OrderEvent,Invoice, Message
-from product.serializers2 import WholesaleProductVariantSerializer, ProductListSerializer
+from product.serializers2 import ProductListSerializer
 from accounts.serializers import AddressSerializer, UserSerializer
 from store.serializers import PickupPointSerializer, ShippingMethodSerializer
+
 
 class RoomSerializer(serializers.ModelSerializer):
     created_at = serializers.ReadOnlyField()
@@ -32,7 +33,7 @@ class RoomRecommendationsSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "product",
-            "wholesale_variants",
+            "variants",
             "priority",
         ]
 
@@ -96,9 +97,10 @@ class RoomUserSerializer(serializers.ModelSerializer):
             "left_at"
         ]
 
+
 class RoomWishlistProductSerializer(serializers.ModelSerializer):
     room = RoomSerializer()
-    wholesale_variant = WholesaleProductVariantSerializer()
+    product = ProductListSerializer()
     user = serializers.HiddenField(
         default=serializers.CurrentUserDefault()
     )
@@ -109,11 +111,12 @@ class RoomWishlistProductSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "room",
-            "wholesale_variant",
+            "product",
             "user",
             "added_on",
             "votes",
         ]
+
 
 class WishlistProductVoteSerializer(serializers.ModelSerializer):
     product = RoomWishlistProductSerializer()
@@ -128,6 +131,7 @@ class WishlistProductVoteSerializer(serializers.ModelSerializer):
             "product",
             "user"
         ]
+
 
 class RoomOrderSerializer(serializers.ModelSerializer):
     room = RoomSerializer()
@@ -155,7 +159,6 @@ class RoomOrderSerializer(serializers.ModelSerializer):
 
 class RoomOrderLineSerializer(serializers.ModelSerializer):
     order = OrderSerializer()
-    variant = WholesaleProductVariantSerializer()
     created_at = serializers.ReadOnlyField()
 
     class Meta:
@@ -166,6 +169,7 @@ class RoomOrderLineSerializer(serializers.ModelSerializer):
             "variant",
             "created_at"
         ]
+
 
 class UserOrderLineSerializer(serializers.ModelSerializer):
     product = RoomOrderLineSerializer()
@@ -180,6 +184,7 @@ class UserOrderLineSerializer(serializers.ModelSerializer):
             "quantity_fulfilled",
             "updated_at",
         ]
+
 
 class OrderEventSerializer(serializers.ModelSerializer):
     order = RoomOrderSerializer()
@@ -196,6 +201,7 @@ class OrderEventSerializer(serializers.ModelSerializer):
             "order",
             "user",
         ]
+
 
 class InvoiceSerializer(serializers.ModelSerializer):
     order = RoomOrderSerializer()

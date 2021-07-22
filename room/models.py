@@ -24,7 +24,7 @@ class Room(models.Model):
 class RoomRecommendedProduct(models.Model):
     room = models.ForeignKey("room.Room", on_delete=models.CASCADE)
     product = models.ForeignKey("product.Product", on_delete=models.CASCADE)
-    wholesale_variants = models.ManyToManyField("product.WholesaleProductVariant")
+    variants = models.ManyToManyField("product.ProductVariant")
     priority = models.PositiveSmallIntegerField(default=1)
 
 
@@ -51,17 +51,17 @@ class RoomUser(models.Model):
 
 class RoomWishlistProduct(models.Model):
     room = models.ForeignKey('room.Room', on_delete=models.CASCADE)
-    wholesale_variant = models.ForeignKey('product.WholesaleProductVariant', on_delete=models.CASCADE)
-    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE)
+    product = models.ForeignKey('product.Product', on_delete=models.CASCADE)
+    user = models.ForeignKey('accounts.User', null=True, blank=True, on_delete=models.SET_NULL)
     added_at = models.DateTimeField(auto_now_add=True)
     votes = models.PositiveSmallIntegerField(default=0)
     voted_by = models.ManyToManyField("accounts.User", through="room.WishlistProductVote", related_name="voted_products")
 
     def __str__(self):
-        return self.wholesale_variant.name
+        return self.product.name
 
     class Meta:
-        unique_together = ("room", "wholesale_variant")
+        unique_together = ("room", "product")
 
 
 class WishlistProductVote(models.Model):
@@ -69,7 +69,7 @@ class WishlistProductVote(models.Model):
     user = models.ForeignKey('accounts.User', on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.product.wholesale_variant.name
+        return self.product.product.name
 
     class Meta:
         unique_together = ("product", "user")
@@ -121,8 +121,8 @@ class RoomOrderLine(models.Model):
     )
     user = models.ForeignKey("accounts.User", on_delete=models.SET_NULL, null=True)
     variant = models.ForeignKey(
-        "product.WholesaleProductVariant",
-        related_name="order_line_wholesale_product_variant",
+        "product.ProductVariant",
+        related_name="order_line_variants",
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
@@ -137,7 +137,7 @@ class RoomOrderLine(models.Model):
 
 class UserOrderLine(models.Model):
     user = models.ForeignKey('accounts.User', null=True, on_delete=models.SET_NULL)
-    product = models.ForeignKey('room.RoomOrderLine', related_name='users_quatity', on_delete=models.CASCADE, null=True)
+    product = models.ForeignKey('room.RoomOrderLine', related_name='users_quantity', on_delete=models.CASCADE, null=True)
     quantity = models.IntegerField(validators=[MinValueValidator(1)])
     quantity_fulfilled = models.IntegerField(
         validators=[MinValueValidator(0)], default=0

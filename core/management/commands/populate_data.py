@@ -11,6 +11,7 @@ from core.management.commands.populate import (
     webtraffic,
     room,
     shop,
+    wishlist
 )
 from core.management.commands.populate.products import products
 
@@ -40,3 +41,5 @@ class Command(BaseCommand):
         print("room populated")
         shop.populate(total)
         print("shop populated")
+        wishlist.populate_wishlist()
+        print("wishlist populated")

@@ -17,7 +17,6 @@ from django.views.decorators.vary import vary_on_cookie, vary_on_headers
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
 from django.core.cache import cache
 from django.conf import settings
-from rest_framework.serializers import Serializer
 from store.permissions import IsStoreOwner
 
 from product.models import (
@@ -28,10 +27,8 @@ from product.models import (
     Customization,
     Product,
     ProductVariant,
-    WholesaleProductVariant,
     ProductImage,
     VariantImage,
-    WholesaleVariantImage,
     ProductReview,
     ProductReviewFile,
     CollectionProduct,
@@ -42,32 +39,27 @@ from product.permissions import IsWebsiteOwnerorAdmin, IsAdminOrReadOnly
 from product.serializers2 import (
     BrandDetailSerializer,
     BrandListSerializer,
-    HomeBrandSerializer,
     ProductTypeSerializer,
     VariationSerializer,
     CustomizationSerializer,
     ProductSerializer,
     ProductImageSerializer,
     ProductVariantSerializer,
-    WholesaleProductVariantSerializer,
     ProductReviewSerializer,
     ProductDetailSerializer,
     CollectionSerializer,
-    HomeCategorySerializer,
-    # ProductImageSerializer2
 )
 from wishlist.models import Wishlist, WishlistItem
-from wishlist.serializers import WishlistSerializer
+from wishlist.serializers import WishlistItemSerializer
 from accounts.models import Address
+from room.models import RoomWishlistProduct
 from shop.serializers import OrderLineSerializer, OrderSerializer
 from shop.models import Order, OrderLine
-
 
 # Serializers
 from product.serializers.category import (
     CategoryListSerializer,
     CategoryDetailSerializer,
-    CategoryProductsSerializer,
 )
 from product.serializers.product import (
     ProductListSerializer,
@@ -97,13 +89,6 @@ class CategoryViewSet(viewsets.ModelViewSet):
                 categories = categories.order_by("-name")
 
         serializer = CategoryListSerializer(categories, many=True)
-        return Response(serializer.data)
-
-    # @method_decorator(cache_page(60 * 60 * 24))
-    @action(detail=False, methods=["get"], name="Category Products")
-    def products(self, request, pk=None):
-        query_set = self.get_queryset()
-        serializer = CategoryProductsSerializer(query_set, many=True)
         return Response(serializer.data)
 
 
@@ -208,16 +193,28 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = ProductListSerializer(products, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # @action(detail=False, methods=["get", "post"], permission_classes=[])
-    # def category_subcategory_filtered(self, request, *args, **kwargs):
-    #     category = self.get_object().category  # kwargs.pop('category')
-    #     sub_category = self.get_object().sub_category #kwargs.pop('sub_category')
-    #     wholesale_products = WholesaleProductVariant.objects.filter(
-    #         product__category=category,
-    #         product__sub_category=sub_category)
-    #     serializer = WholesaleProductVariantSerializer(wholesale_products, many=True)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    def add_to_wishlist(self, request, pk):
+        product = self.get_object()
+        user = request.data.get("user", None)
+        groups = request.data.get("groups", None)
+        groups = list(map(int, groups.strip().strip(",").split(",")))
+        if user:
+            wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+            wishlist_item = wishlist.add_product(product)
+        elif groups:
+            for group in groups:
+                room_wishlist_product, created = RoomWishlistProduct.objects.get_or_create(room_id=group, product=product)
+                if created:
+                    room_wishlist_product.user = request.user
+        return Response({"status": "success"}, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=["get"], permission_classes=[IsAuthenticated])
+    def remove_from_wishlist(self, request, pk):
+        product = self.get_object()
+        wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+        wishlist.remove_product(product)
+        return Response({"status": "success"}, status=status.HTTP_200_OK)
 
 
 class ProductImageViewSet(viewsets.ModelViewSet):
@@ -237,22 +234,6 @@ class ProductVariantViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         productVariants = ProductVariant.objects.all()
         return productVariants
-
-    @action(detail=True, methods=["get"], permission_classes=[IsAuthenticated])
-    def add_to_wishlist(self, request, pk):
-        product_variant = self.get_object()
-        wishlist, created = Wishlist.objects.get_or_create(user=request.user)
-        wishlist_item = wishlist.add_variant(product_variant)
-        serializer = WishlistSerializer(wishlist, many=False)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(detail=True, methods=["get"], permission_classes=[IsAuthenticated])
-    def remove_from_wishlist(self, request, pk):
-        product_variant = self.get_object()
-        wishlist, created = Wishlist.objects.get_or_create(user=request.user)
-        wishlist.remove_variant(product_variant)
-        serializer = WishlistSerializer(wishlist, many=False)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["get"], permission_classes=[IsAuthenticated])  # wholsale_min_qty constraint not applied
     def add_to_cart(self, request, pk):
@@ -283,10 +264,10 @@ class ProductVariantViewSet(viewsets.ModelViewSet):
         else:
             # print("exist")
             order = Order.objects.get(
-            user=current_user, 
-            billing_address=request.user.default_billing_address, 
-            shipping_address=request.user.default_shipping_address, 
-            # status ="draft", 
+                user=current_user,
+                billing_address=request.user.default_billing_address,
+                shipping_address=request.user.default_shipping_address,
+                # status ="draft",
             )
             orderline = OrderLine.objects.get(variant=product_variant, order=order)
 
@@ -294,40 +275,13 @@ class ProductVariantViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class WholesaleProductVariantViewSet(viewsets.ModelViewSet):
-    serializer_class = WholesaleProductVariantSerializer
-    permission_classes = [IsAdminOrReadOnly]  # [IsShopOwnerOrAdminOrReadOnly]
-
-    def get_queryset(self):
-        wholesale_product_variants = WholesaleProductVariant.objects.all()
-        return wholesale_product_variants
-
-
 class BrandViewSet(viewsets.ModelViewSet):
     serializer_class = BrandDetailSerializer
     permission_classes = [IsAdminOrReadOnly]
     queryset = Brand.objects.all()
 
-
+    # @method_decorator(cache_page(60 * 60 * 24))
     def list(self, request, *args, **kwargs):
         brands = self.get_queryset()
         serializer = BrandListSerializer(brands, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class HomeBrandViewSet(viewsets.ModelViewSet):
-    serializer_class = HomeBrandSerializer
-    permission_classes = [IsAdminOrReadOnly]
-    queryset = Brand.objects.all()
-
-
-class HomeCategoryViewSet(viewsets.ModelViewSet):
-    serializer_class = HomeCategorySerializer
-    permission_classes = [IsAdminOrReadOnly]
-    queryset = Category.objects.all()
-
-
-
-
-
-

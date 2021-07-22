@@ -7,7 +7,7 @@ import random
 
 from room.models import Room, RoomUser
 from accounts.models import User, Address
-from product.models import Collection, Product, Category, ProductVariant, WholesaleProductVariant
+from product.models import Collection, Product, Category, ProductVariant
 from shop.choices import order_status_choices, order_event_type_choices, voucher_type_choices, \
     main_order_event_type_choices
 from store.models import ShippingMethod, PickupPoint
@@ -75,13 +75,11 @@ def populate_gift_cards(order):
 
 def populate_order_line(order):
     variants = ProductVariant.objects.all()
-    wholesalevariants = WholesaleProductVariant.objects.all()
     OrderLine.objects.bulk_create(
         [
             OrderLine(
                 order=order,
                 variant=variants[random.randint(0, variants.count() - 1)],
-                wholesale_variant=wholesalevariants[random.randint(0, wholesalevariants.count() - 1)],
                 quantity=fake.random_int(max=100),
                 quantity_fulfilled=fake.random_int(min=0, max=50),
 

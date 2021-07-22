@@ -1,4 +1,3 @@
-from copy import error
 from django.db import models
 from django_measurement.models import MeasurementField
 from versatileimagefield.fields import VersatileImageField
@@ -29,22 +28,21 @@ class SubCategory(models.Model):
     class Meta:
         verbose_name_plural = "Sub-Categories"
 
+
 class Brand(models.Model):
     name = models.CharField(max_length=250, unique=True)
     image = models.ImageField(upload_to="products", blank=False)
     alt = models.CharField(max_length=128, blank=True)
     description = models.TextField()
+    color = models.CharField(max_length=32)
 
-    def average_rating(self):               #returns avg rating of all products of a brand
-        ratingz = ProductReview.objects.filter(product__brand__id=self.id).aggregate(ratings=Avg('rating'))
-        rating = ratingz['ratings']
+    def average_rating(self):  # returns avg rating of all products of a brand
+        ratings = ProductReview.objects.filter(product__brand__id=self.id).aggregate(ratings=Avg('rating'))
+        rating = ratings['ratings']
         return rating
-        
 
     def __str__(self) -> str:
         return self.name
-
-    
 
 
 class ProductType(models.Model):
@@ -89,7 +87,7 @@ class Product(models.Model):
         blank=True,
     )
     brand = models.ForeignKey(
-        Brand, 
+        Brand,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -114,7 +112,7 @@ class Product(models.Model):
     visible_in_listings = models.BooleanField(default=False)
     variations = models.ManyToManyField("product.Variation")
     customizations = models.ManyToManyField("product.Customization")
-    views = models.IntegerField(default = 0)
+    views = models.IntegerField(default=0)
 
     def __iter__(self):
         if not hasattr(self, "__variants"):
@@ -136,14 +134,24 @@ class Product(models.Model):
 
     @cached_property
     def lowest_min_qty(self):
-        min_qty = WholesaleProductVariant.objects.filter(product=self).aggregate(Min('min_qty'))['min_qty__min']
+        min_qty = ProductPrice.objects.filter(product=self).aggregate(Min('min_qty'))['min_qty__min']
         return min_qty
 
     @cached_property
-    def min_wholesale_price(self):
-        min_price = WholesaleProductVariant.objects.filter(product=self).aggregate(Min('discounted_price'))['discounted_price__min']
+    def min_price(self):
+        min_price = ProductPrice.objects.filter(product=self).aggregate(Min('discounted_price'))[
+            'discounted_price__min']
         return min_price
 
+
+class ProductPrice(models.Model):
+    product = models.ForeignKey("product.Product", on_delete=models.CASCADE)
+    min_qty = models.PositiveSmallIntegerField(default=1)
+    price = models.PositiveBigIntegerField()
+    discounted_price = models.PositiveBigIntegerField()
+    store = models.ForeignKey(
+        "store.Store", related_name="wholesale_products", on_delete=models.CASCADE
+    )
 
 # class VariantChoice(models.Model):
 #     name = models.CharField(max_length=255, blank=True)
@@ -155,7 +163,7 @@ class Product(models.Model):
 class ProductVariant(models.Model):
     name = models.CharField(max_length=255, blank=True)
     product = models.ForeignKey(
-       "product.Product", related_name="variants", on_delete=models.CASCADE
+        "product.Product", related_name="variants", on_delete=models.CASCADE
     )
     variant = models.ForeignKey(
         "product.Variation", related_name="products", on_delete=models.PROTECT
@@ -168,31 +176,9 @@ class ProductVariant(models.Model):
 
     def __str__(self):
         return str(self.product) + "-" + self.name
-    
+
     def get_images(self):
         return "\n".join([p.__str__() for p in self.images.all()])
-
-
-class WholesaleProductVariant(models.Model):
-    name = models.CharField(max_length=255, blank=True)
-    store = models.ForeignKey(
-        "store.Store", related_name="wholesale_products", on_delete=models.CASCADE
-    )
-    product = models.ForeignKey(
-        "product.Product", related_name="wholesale_variants", on_delete=models.CASCADE
-    )
-    variant = models.ForeignKey(
-        "product.Variation", related_name="wholesale_products", on_delete=models.PROTECT
-    )
-    images = models.ManyToManyField("ProductImage", through="WholesaleVariantImage")
-    min_qty = models.PositiveIntegerField()
-    per_item_qty = models.PositiveIntegerField()
-    pack_size = models.PositiveIntegerField()
-    price = models.FloatField()
-    discounted_price = models.FloatField()
-
-    def __str__(self):
-        return str(self.product) + "-" + self.name
 
 
 class ProductImage(models.Model):
@@ -213,20 +199,6 @@ class VariantImage(models.Model):
     )
     image = models.ForeignKey(
         ProductImage, related_name="variant_images", on_delete=models.CASCADE
-    )
-
-    class Meta:
-        unique_together = ("variant", "image")
-
-
-class WholesaleVariantImage(models.Model):
-    variant = models.ForeignKey(
-        "product.WholesaleProductVariant",
-        related_name="wholesale_variant_images",
-        on_delete=models.CASCADE,
-    )
-    image = models.ForeignKey(
-        ProductImage, related_name="wholesale_variant_images", on_delete=models.CASCADE
     )
 
     class Meta:
@@ -273,6 +245,3 @@ class Collection(models.Model):
     # )
     background_image_alt = models.CharField(max_length=128, blank=True)
     description = models.TextField(blank=True, null=True)
-
-
-

@@ -8,11 +8,10 @@ from product.models import (
     Variation,
     Customization,
     Product,
+    ProductPrice,
     ProductVariant,
-    WholesaleProductVariant,
     ProductImage,
     VariantImage,
-    WholesaleVariantImage,
     ProductReview,
     ProductReviewFile,
     CollectionProduct,
@@ -37,7 +36,7 @@ def populate(n):
     # add_review_file(n)
     add_collections()
     add_collection_products(n)
-    
+
 
 def add_sub_categories(N):
     categories = Category.objects.all()
@@ -46,7 +45,7 @@ def add_sub_categories(N):
         [
             SubCategory(
                 name=fake.word(),
-                category=categories[fake.random_int(max = categories_count-1)]
+                category=categories[fake.random_int(max=categories_count - 1)]
             )
             for _ in range(N)
         ]
@@ -135,21 +134,38 @@ def add_products(n):
 
     for i in range(100):
         product = Product.objects.create(
-            product_type=product_types[fake.random_int(max=product_types.count()-1)],
+            product_type=product_types[fake.random_int(max=product_types.count() - 1)],
             name=fake.word(),
             description=fake.text(),
-            category=categories[fake.random_int(max=categories.count()-1)],
-            sub_category=sub_categories[fake.random_int(max=sub_categories.count()-1)],
+            category=categories[fake.random_int(max=categories.count() - 1)],
+            sub_category=sub_categories[fake.random_int(max=sub_categories.count() - 1)],
             charge_taxes=fake.pybool(),
-            product_qty=fake.random_int(min = 10 , max =1000),
-            views = fake.random_int(max =10000),
+            product_qty=fake.random_int(min=10, max=1000),
+            views=fake.random_int(max=10000),
             visible_in_listings=fake.pybool(),
-            brand = brands[fake.random_int(max=brands.count()-1)]
+            brand=brands[fake.random_int(max=brands.count() - 1)]
         )
         add_product_images(product)
+        add_product_prices(product)
         add_product_variant(product)
         add_product_reviews(product)
-        add_wholesale_variant(product) 
+
+
+def add_product_prices(product):
+    n = fake.random_int(min=1, max=4)
+    stores = Store.objects.all()
+    ProductPrice.objects.bulk_create(
+        [
+            ProductPrice(
+                product=product,
+                min_qty=fake.random_int(min=10, max=100),
+                price=fake.random_int(min=10, max=1000),
+                discounted_price=fake.random_int(min=10, max=1000),
+                store=stores[fake.random_int(max=stores.count() - 1)]
+            )
+            for _ in range(n)
+        ]
+    )
 
 
 def add_product_images(product):
@@ -159,7 +175,7 @@ def add_product_images(product):
             ProductImage(
                 product=product,
                 image=fake.image_url(),
-                alt = fake.word(),
+                alt=fake.word(),
             )
             for _ in range(n)
         ]
@@ -172,11 +188,11 @@ def add_product_variant(product):
         variant = ProductVariant.objects.create(
             name=fake.word(),
             product=product,
-            variant=variations[fake.random_int(max=variations.count()-1)],
+            variant=variations[fake.random_int(max=variations.count() - 1)],
             track_inventory=fake.pybool(),
-            product_qty=fake.random_int(max =1000),
-            price=fake.random_int(min = 10 , max = 10000),
-            discounted_price=fake.random_int(min = 10 , max = 10000),
+            product_qty=fake.random_int(max=1000),
+            price=fake.random_int(min=10, max=10000),
+            discounted_price=fake.random_int(min=10, max=10000),
         )
         add_variant_images(variant)
 
@@ -193,62 +209,31 @@ def add_variant_images(variant):
     )
 
 
-def add_wholesale_variant(product):
-    variants = Variation.objects.all()
-    stores = Store.objects.all()
-    for _ in range(fake.random_digit()):
-        wholesale_variant = WholesaleProductVariant.objects.create(
-            name=fake.word(),
-            store=stores[fake.random_int(max = stores.count()-1)],
-            product=product,
-            variant=variants[fake.random_int(max =variants.count()-1)],
-            min_qty=fake.random_int(max=1000),
-            per_item_qty=fake.random_int(max = 100),
-            pack_size=fake.random_int(max = 100 ),
-            price=fake.random_int(max = 10000),
-            discounted_price=fake.random_int(max = 10000),
-        )
-        add_wholesale_variant_images(wholesale_variant)
-
-
-def add_wholesale_variant_images(variant):
-    images = ProductImage.objects.filter(product=variant.product)
-    WholesaleVariantImage.objects.bulk_create(      #udit
-        [
-            WholesaleVariantImage(
-                variant=variant,
-                image=images[fake.random_int(max=images.count() - 1)]
-            )
-        ]
-    )
-
-
 def add_product_reviews(product):
     users = User.objects.all()
     ProductReview.objects.bulk_create(
         [
             ProductReview(
-                user = users[fake.random_int(max=users.count()-1)],
+                user=users[fake.random_int(max=users.count() - 1)],
                 product=product,
                 rating=fake.random_int(max=5),
                 review=fake.text()
             )
             for _ in range(fake.random_digit())
-                
+
         ]
-    )   
+    )
     add_review_file(product)
-    
 
 
 def add_review_file(product):
-    reviews = ProductReview.objects.filter(product = product)
+    reviews = ProductReview.objects.filter(product=product)
     for i in range(reviews.count()):
         ProductReviewFile.objects.create(
-    
-        review=reviews[i],
-        file = fake.file_name(extension='jpg')
-    )
+
+            review=reviews[i],
+            file=fake.file_name(extension='jpg')
+        )
 
 
 def add_collections():
@@ -272,25 +257,24 @@ def add_collection_products(n):
     CollectionProduct.objects.bulk_create(
         [
             CollectionProduct(
-                collection=collections[fake.random_int(max=collections.count()-1)],
-                product=products[fake.unique.random_int(max=products.count()-1)]
+                collection=collections[fake.random_int(max=collections.count() - 1)],
+                product=products[fake.unique.random_int(max=products.count() - 1)]
             )
             for _ in range(n)
         ]
     )
 
+
 def add_brands():
-    
-    
     Brand.objects.bulk_create(
         [
             Brand(
-                name = fake.unique.word(),
-                image = fake.image_url(),
-                alt = fake.word(),
-                description = fake.text(),
+                name=fake.unique.word(),
+                image=fake.image_url(),
+                alt=fake.word(),
+                description=fake.text(),
             )
             for _ in range(20)
-            
+
         ]
     )

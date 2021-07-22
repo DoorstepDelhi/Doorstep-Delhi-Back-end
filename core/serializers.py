@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from .models import ClientLog, Support, SupportCategory, SupportReply, SupportSubCategory
 
 from .models import Notification, ClientLog, Support, SupportCategory, SupportReply, SupportSubCategory
 

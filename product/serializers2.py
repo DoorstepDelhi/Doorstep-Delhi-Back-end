@@ -7,11 +7,10 @@ from product.models import (
     Variation,
     Customization,
     Product,
+    ProductPrice,
     ProductVariant,
-    WholesaleProductVariant,
     ProductImage,
     VariantImage,
-    WholesaleVariantImage,
     CollectionProduct,
     Collection,
     ProductReview,
@@ -24,16 +23,7 @@ from product.serializers.category import CategoryListSerializer
 from product.serializers.product import ProductListSerializer
 
 
-
-    
-
-
-
-
-
-
 class ProductTypeSerializer(serializers.ModelSerializer):
-    products = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = ProductType
@@ -49,29 +39,24 @@ class ProductTypeSerializer(serializers.ModelSerializer):
             "products"
         ]
 
-    def get_products(self, obj):
-        products = Product.objects.filter(product_type=obj)
-        serializer = ProductListSerializer(products, many=True)
-        return serializer.data
-
 
 class VariationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Variation
-        fields = ["id","name"]
+        fields = ["id", "name"]
 
 
 class CustomizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customization
-        fields = ["id","name", "description"]
+        fields = ["id", "name", "description"]
 
 
 class ProductSerializer(serializers.ModelSerializer):
     product_type = ProductTypeSerializer()
     category = CategoryListSerializer()
     variations = VariationSerializer()
-    customization = CustomizationSerializer(many = True)
+    customization = CustomizationSerializer(many=True)
 
     class Meta:
         model = Product
@@ -108,31 +93,19 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
-    product = ProductListSerializer()
+
     class Meta:
         model = ProductImage
         fields = [
             "id",
-            "product",
             "image",
             "alt",
         ]
 
-# class ProductImageSerializer2(serializers.ModelSerializer):
-#     product = ProductSerializer(many = True)
-#     class Meta:
-#         model = ProductImage
-#         fields = [
-#             "id",
-#             "product",
-#             "image",
-#             "alt",
-#         ]
 
 class ProductVariantSerializer(serializers.ModelSerializer):
-    product = ProductListSerializer()
     variant = VariationSerializer()
-    images = ProductImageSerializer(many =True)
+    images = ProductImageSerializer(many=True)
 
     class Meta:
         model = ProductVariant
@@ -149,28 +122,6 @@ class ProductVariantSerializer(serializers.ModelSerializer):
         ]
 
 
-class WholesaleProductVariantSerializer(serializers.ModelSerializer):
-    store = StoreSerializer()
-    variant = VariationSerializer()
-    images = ProductImageSerializer(many = True)
-
-    class Meta:
-        model = WholesaleProductVariant
-        fields = [
-            "id",
-            "name",
-            "store",
-            "variant",
-            "images",
-            "min_qty",
-            "per_item_qty",
-            "pack_size",
-            "price",
-            "discounted_price",
-        ]
-
-
-
 class ProductReviewSerializer(serializers.ModelSerializer):
     files = serializers.SerializerMethodField(read_only=True)
 
@@ -185,45 +136,45 @@ class ProductReviewSerializer(serializers.ModelSerializer):
         ]
 
     def get_files(self, obj):
-        files = ProductReviewFile.objects.filter(review = obj).values_list('file', flat = True)
+        files = ProductReviewFile.objects.filter(review=obj).values_list('file', flat=True)
         print(files)
         return files
 
 
 class ReviewInputSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = ProductReview
         fields = [
             "rating",
             "review",
-           
         ]
-
-    
 
 
 class BrandListSerializer(serializers.ModelSerializer):
-    products_count = serializers.SerializerMethodField(read_only = True)
+    products_count = serializers.SerializerMethodField(read_only=True)
+    products = serializers.SerializerMethodField()
 
     class Meta:
         model = Brand
-        fields = ["name" , "image" , "alt" , "average_rating", "products_count"]
+        fields = ["id", "color", "name", "image", "alt", "average_rating", "products_count"]
 
     def get_products_count(self, obj):
         count = products = Product.objects.filter(brand=obj).count()
         return count
 
+    def get_products(self, obj):
+        products = Product.objects.filter(brand=obj)[:10]
+        serializer = ProductListSerializer(products, many=True)
+        return serializer.data
+
 
 class BrandDetailSerializer(serializers.ModelSerializer):
-    
     products = serializers.SerializerMethodField()
     reviews = serializers.SerializerMethodField()
 
     class Meta:
         model = Brand
-        fields = ["name" , "image" , "alt" , "description", "products", "reviews"]
-
+        fields = ["id", "color", "name", "image", "alt", "description", "products", "reviews"]
 
     def get_products(self, obj):
         products = Product.objects.filter(brand=obj)
@@ -231,40 +182,31 @@ class BrandDetailSerializer(serializers.ModelSerializer):
         return serializer.data
 
     def get_reviews(self, obj):
-        reviews = ProductReview.objects.filter(product__brand = obj)
-        serializer = ProductReviewSerializer(reviews, many = True)
+        reviews = ProductReview.objects.filter(product__brand=obj)
+        serializer = ProductReviewSerializer(reviews, many=True)
         return serializer.data
 
 
-
-class HomeBrandSerializer(serializers.ModelSerializer):    
-    products = serializers.SerializerMethodField()
-    brand_name = serializers.SerializerMethodField('get_name')
-
+class ProductPriceSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Brand
-        fields = ["brand_name", "image", "products"]
-
-
-    def get_products(self, obj):
-        products = Product.objects.filter(brand=obj)[0:10]
-        serializer = ProductListSerializer(products, many=True)
-        return serializer.data
-
-    def get_name(self, obj):
-        return obj.name
-
+        model = ProductPrice
+        fields = (
+            "product",
+            "min_qty",
+            "price",
+            "discounted_price"
+        )
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
     product_type = ProductTypeSerializer()
     category = CategoryListSerializer()
     variations = VariationSerializer()
-    customization = CustomizationSerializer(read_only=True,many=True)
+    customization = CustomizationSerializer(read_only=True, many=True)
     variants = serializers.SerializerMethodField(read_only=True)
-    wholesale_variants = serializers.SerializerMethodField(read_only=True)
     reviews = serializers.SerializerMethodField(read_only=True)
     brand = BrandListSerializer()
+    prices = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Product
@@ -282,7 +224,6 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'product_qty',
             'visible_in_listings',
             'variants',
-            'wholesale_variants',
             'reviews',
 
         ]
@@ -303,14 +244,14 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             )
         return products
 
+    def get_prices(self, obj):
+        prices = ProductPrice.objects.filter(product=obj)
+        serializer = ProductPriceSerializer(prices, many=True)
+        return serializer.data
+
     def get_variants(self, obj):
         variants = ProductVariant.objects.filter(product=obj)
         serializer = ProductVariantSerializer(variants, many=True)
-        return serializer.data
-
-    def get_wholesale_variants(self, obj):
-        variants = WholesaleProductVariant.objects.filter(product=obj)
-        serializer = WholesaleProductVariantSerializer(variants, many=True)
         return serializer.data
 
     def get_reviews(self, obj):
@@ -320,7 +261,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
 
 class CollectionSerializer(serializers.ModelSerializer):
-    products = ProductListSerializer(many = True)
+    products = ProductListSerializer(many=True)
 
     class Meta:
         model = Collection
@@ -332,10 +273,3 @@ class CollectionSerializer(serializers.ModelSerializer):
             "background_image_alt",
             "description",
         ]
-
-
-class HomeCategorySerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Category
-        fields = ["id", "name"]
