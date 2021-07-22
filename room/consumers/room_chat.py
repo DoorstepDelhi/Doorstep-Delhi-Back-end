@@ -47,7 +47,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 'message': "Wrong Username or Room ID",
             }))
             await self.disconnect(403)
-
         self.product = text_data.get('product', None)
         self.message = text_data['message_text']
         data = await save_message(self.room,
