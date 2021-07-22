@@ -233,6 +233,7 @@ class MessageSerializer(serializers.ModelSerializer):
             "id",
             "file_field",
             "message_text",
+            "product",
             "user",
             "created_on",
             "room"

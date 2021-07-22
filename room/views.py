@@ -1,15 +1,16 @@
 from django.shortcuts import render
 from .models import Room, RoomOrder, RoomUser, RoomWishlistProduct, UserOrderLine
-from rest_framework import viewsets
+from rest_framework import serializers, viewsets
 
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from room.serializers import RoomOrderSerializer, RoomSerializer, RoomListSerializer, RoomUserSerializer, \
-    RoomWishlistProductSerializer, RoomOrderLineSerializer, RoomLastMessageSerializer
+from room.serializers import MessageSerializer, RoomOrderSerializer, RoomSerializer, RoomListSerializer, RoomUserSerializer, \
+    RoomWishlistProductSerializer, RoomOrderLineSerializer, RoomLastMessageSerializer, Message
 from shop.models import OrderEvent
 from django.db.models import Q, F
 
+from .pagination import CustomPagination
 
 def index(request):
     return render(request, 'room/index.html', {})
@@ -27,7 +28,8 @@ def room(request, room_name):
 class RoomViewset(viewsets.ModelViewSet):
     serializer_class = RoomLastMessageSerializer
     permission_classes = [IsAuthenticated]
-
+    pagination_class = CustomPagination
+    
     def get_queryset(self):
         rooms = Room.objects.all()
         if not self.request.user.is_superuser:
@@ -57,6 +59,16 @@ class RoomViewset(viewsets.ModelViewSet):
         serializer = RoomOrderSerializer(orders, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'], name='room-orders')
+    def chats(self, request, pk = None):
+        messages  = Message.objects.filter(room__id = 1)
+        messages = messages.order_by("-created_on")
+        serializer = MessageSerializer(messages, many = True)
+        return Response(serializer.data)
+        
+        
+
+    
 
 class RoomWishlistProductViewset(viewsets.ModelViewSet):
     serializer_class = RoomWishlistProductSerializer

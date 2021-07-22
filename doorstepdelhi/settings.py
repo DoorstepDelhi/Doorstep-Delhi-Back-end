@@ -204,6 +204,7 @@ REST_FRAMEWORK = {
         'user': '100000/day'
     },
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+   
 }
 
 CSRF_COOKIE_NAME = "csrftoken"

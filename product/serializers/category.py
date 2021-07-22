@@ -30,6 +30,7 @@ class CategoryListSerializer(serializers.ModelSerializer):
             "name",
             "icon",
             "sub_categories",
+            "products",
         ]
 
     def get_sub_categories(self, obj):

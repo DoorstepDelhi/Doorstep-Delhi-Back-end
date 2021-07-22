@@ -179,11 +179,13 @@ def populate_invoice(roomorder):
 
 def populate_message(room):
     users = room.users.all()
+    products = Product.objects.all()
     Message.objects.bulk_create(
         [
             Message(
                 file_field=fake.file_name(),
                 message_text=fake.text(max_nb_chars=200),
+                product = products[random.randint(0, products.count() - 1)],
                 user=users[fake.random_int(min=0, max=users.count()-1)],
                 created_on=make_aware(datetime.now()),
                 room=room

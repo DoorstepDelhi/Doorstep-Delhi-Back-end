@@ -156,7 +156,7 @@ class BrandListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Brand
-        fields = ["id", "color", "name", "image", "alt", "average_rating", "products_count"]
+        fields = ["id", "color", "name", "image", "alt", "average_rating", "products_count", "products"]
 
     def get_products_count(self, obj):
         count = products = Product.objects.filter(brand=obj).count()
@@ -225,6 +225,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'visible_in_listings',
             'variants',
             'reviews',
+            'prices',
 
         ]
 

@@ -151,6 +151,7 @@ class CollectionViewSet(viewsets.ModelViewSet):
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductDetailSerializer
     permission_classes = [IsAdminOrReadOnly]
+    
 
     def get_queryset(self):
         # if cache.get("all_products"):
