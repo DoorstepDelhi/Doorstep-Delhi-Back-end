@@ -33,10 +33,8 @@ class RoomViewset(viewsets.ModelViewSet):
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        rooms = Room.objects.all()
-        if not self.request.user.is_superuser:
-            rooms = Room.objects.filter(users=self.request.user, room_users__role__in=["A", "U"],
-                                        room_users__left_at=None, deleted_at=None)
+        rooms = Room.objects.filter(users=self.request.user, room_users__role__in=["A", "U"],
+                                    room_users__left_at=None, deleted_at=None)
         return rooms
 
     def list(self, request):
@@ -46,8 +44,11 @@ class RoomViewset(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], name='room-users')
     def last_message(self, request, pk=None):
+        context = {
+            "request":request,
+        }
         queryset = self.get_queryset()
-        serializer = RoomLastMessageSerializer(queryset, many=True)
+        serializer = RoomLastMessageSerializer(queryset, many=True, context=context)
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'], name='room-users')

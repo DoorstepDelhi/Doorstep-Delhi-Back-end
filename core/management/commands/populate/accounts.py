@@ -22,11 +22,14 @@ def add_superuser():
     first_name = fake.first_name()
     last_name = fake.last_name()
     password = fake.password(length=12)
-    user = User.objects.create_superuser(username=username, first_name=first_name, last_name=last_name, password=password)
+    user = User.objects.create_superuser(username=username, first_name=first_name, last_name=last_name, password="admin")
     add_addresses(user)
 
 
 def add_addresses(user):
+    user = User.objects.create_user(username='8888888888', password="admin")
+    user = User.objects.create_user(username='7777777777', password="admin")
+    user = User.objects.create_user(username='6666666666', password="admin")
     Address.objects.bulk_create(
         [
             Address(
