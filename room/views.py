@@ -28,7 +28,7 @@ def room(request, room_name):
 
 
 class RoomViewset(viewsets.ModelViewSet):
-    serializer_class = RoomLastMessageSerializer
+    serializer_class = RoomSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = CustomPagination
 

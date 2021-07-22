@@ -71,7 +71,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated,], name="Nearby Groups")
-    def nearby(self, request, *args, **kwargs):
+    def groups_nearby(self, request, *args, **kwargs):
         # longitude = request.data['long']
         # latitude = request.data['lat']
         rooms = Room.objects.all()[:20]
