@@ -1,36 +1,26 @@
 import json
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.db import database_sync_to_async
+from django.contrib.postgres.search import TrigramSimilarity
 
 from room.models import Room, RoomUser, RoomRecommendedProduct
 from room.serializers import RoomRecommendationsSerializer
 from accounts.models import User
+from product.models import Product
+from product.serializers.product import ProductListSerializer
 
 
-class ChatConsumer(AsyncJsonWebsocketConsumer):
+class ChatRecommendationConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.user = self.scope["user"]
         self.room = await get_room(self.room_name)
-        self.room_user = await get_room_user(self.room, self.user)
         self.room_group_name = 'recommendations_%s' % self.room_name
-
-        if self.room_user:
-            # Join room group
-            await self.channel_layer.group_add(
-                self.room_group_name,
-                self.channel_name
-            )
-            await self.accept()
-            self.room_username_list = await get_room_username_list(self.room)
-            await self.send(text_data=json.dumps({
-                'message': "Accepted",
-            }))
-        else:
-            await self.send(text_data=json.dumps({
-                'message': "Wrong User or Room ID",
-            }))
-            await self.disconnect(403)
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+        await self.accept()
 
     async def disconnect(self, close_code):
         # Leave room group
@@ -46,12 +36,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 'message': "Wrong Username or Room ID",
             }))
 
-
     async def send_to_websocket(self, event):
         await self.send_json(event)
 
     async def send_room_recommendations(self, event):
-        data = await get_room_recommendations(self.room)
+        text = event["message"]
+        data = await get_room_recommendations(text)
         await self.send_json(data)
 
 
@@ -72,9 +62,10 @@ def get_room_username_list(room):
     room_users = room.users.values_list('username', flat=True)
     return room_users
 
-@database_sync_to_async
-def get_room_recommendations(room):
-    products = RoomRecommendedProduct.objects.filter(room=room)
-    serializer = RoomRecommendationsSerializer(products, many=True)
-    return serializer.data
 
+@database_sync_to_async
+def get_room_recommendations(text):
+    # products = Product.objects.annotate(similarity=TrigramSimilarity('name', text),).filter(similarity__gt=0.3).order_by('-similarity')
+    products = Product.objects.filter(name__icontains=text)[:5]
+    serializer = ProductListSerializer(products, many=True)
+    return serializer.data

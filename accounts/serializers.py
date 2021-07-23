@@ -3,6 +3,7 @@ from allauth.account.adapter import get_adapter
 from rest_auth.registration.serializers import RegisterSerializer
 from versatileimagefield.serializers import VersatileImageFieldSerializer
 from rest_framework.authtoken.models import Token
+import random
 
 from .models import User, Address
 from room.models import RoomUser
@@ -173,5 +174,6 @@ class NearbyUserSerializer(serializers.ModelSerializer):
             'distance',
         )
 
-    def get_distace(self, obj):
-        return 10
+    def get_distance(self, obj):
+        distance = round(random.uniform(33.33, 66.66), 2)
+        return distance

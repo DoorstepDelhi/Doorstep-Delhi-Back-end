@@ -4,8 +4,14 @@ from django.utils.timezone import now
 from django.core.validators import MinValueValidator
 from django.db.models.signals import post_save
 
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
 from shop.choices import order_status_choices, order_event_type_choices, voucher_type_choices, \
     discout_value_type_choices
+from product.serializers.product import ProductListSerializer
 
 
 class Room(models.Model):
@@ -185,3 +191,17 @@ class Message(models.Model):
 
     def __str__(self):
         return self.user.__str__() + " : " + self.message_text
+
+
+@receiver(post_save, sender=Message, dispatch_uid="send_recommendsations")
+def send_notification(sender, instance, **kwargs):
+    if instance.message_text:
+        print("Starting reading message")
+        room_group_name = 'recommendations_%s' % instance.room.name
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            room_group_name, {
+                'type': "send_room_recommendations",
+                'message': instance.message_text
+            }
+        )
