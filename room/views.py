@@ -182,7 +182,7 @@ class RecommendationKeywords(APIView):
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
             room_group_name, {
-                'type': "send_to_websocket",
+                'type': "send_room_recommendations",
                 'message': serializer.data
             }
         )
