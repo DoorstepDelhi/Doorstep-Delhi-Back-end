@@ -10,7 +10,7 @@ from versatileimagefield.fields import VersatileImageField
 
 class User(AbstractUser):
     profile_pic = VersatileImageField(
-        upload_to="user-profile-pics", blank=True, null=True
+        upload_to="users", blank=True, null=True
     )
     default_shipping_address = models.ForeignKey(
         "accounts.Address",

@@ -15,8 +15,7 @@ class SupportViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Support.objects.filter(user=self.request.user)
-        serializer = SupportSerializer(queryset, many=True)
-        return serializer.data
+        return queryset
 
 
 class SupportReplyViewSet(viewsets.ModelViewSet):
@@ -26,8 +25,7 @@ class SupportReplyViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         query_set = SupportReply.objects.filter(user=self.request.user)
-        serializer = SupportReplySerializer(query_set, many=True)
-        return serializer.data
+        return query_set
 
     @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated, ])
     def update_support(self, request, pk, *args, **kwargs):

@@ -26,6 +26,17 @@ class VariationSerializer(serializers.ModelSerializer):
         fields = ["id","name"]
 
 
+class ProductImageSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ProductImage
+        fields = [
+            "id",
+            "image",
+            "alt",
+        ]
+
+
 class ProductListSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     min_qty = serializers.SerializerMethodField()
@@ -52,9 +63,6 @@ class ProductListSerializer(serializers.ModelSerializer):
         image = ProductImage.objects.filter(product=obj)
         if image.exists():
             image = image[0]
-            data = {
-                'url': image.image.url,
-                'alt': image.alt,
-            }
-            return data
+            serializer=ProductImageSerializer(image, context=self.context)
+            return serializer.data
         return None

@@ -12,7 +12,7 @@ class Room(models.Model):
     name = models.CharField(max_length=150)
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
-    image = models.ImageField(blank=True, null=True)
+    image = models.ImageField(blank=True, null=True, upload_to='rooms')
     created_at = models.DateTimeField(auto_now_add=True)
     deleted_at = models.DateTimeField(blank=True, null=True)
     users = models.ManyToManyField("accounts.User", through="room.RoomUser")
@@ -144,7 +144,7 @@ class UserOrderLine(models.Model):
     )
     updated_at = models.DateTimeField(auto_now=True)
     customization = models.TextField(null=True, blank=True)
-    file = models.FileField(null=True, blank=True)
+    file = models.FileField(null=True, blank=True, upload_to="group_orders")
 
 
 class OrderEvent(models.Model):
@@ -179,7 +179,7 @@ class Message(models.Model):
     room = models.ForeignKey('room.Room', on_delete=models.CASCADE)
     user = models.ForeignKey('accounts.User', on_delete=models.CASCADE)
     product = models.ForeignKey('product.Product', on_delete= models.CASCADE, null = True)
-    file_field = models.FileField(upload_to='media/Message', blank=True, null=True)
+    file_field = models.FileField(upload_to='messages', blank=True, null=True)
     message_text = models.CharField(max_length=1000, blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True)
 

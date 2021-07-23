@@ -31,7 +31,7 @@ class SubCategory(models.Model):
 
 class Brand(models.Model):
     name = models.CharField(max_length=250, unique=True)
-    image = models.ImageField(upload_to="products", blank=False)
+    image = models.ImageField(upload_to="brands", blank=False)
     alt = models.CharField(max_length=128, blank=True)
     description = models.TextField()
     color = models.CharField(max_length=32)
@@ -215,7 +215,7 @@ class ProductReview(models.Model):
 
 class ProductReviewFile(models.Model):
     review = models.ForeignKey("product.ProductReview", on_delete=models.CASCADE)
-    file = models.FileField()
+    file = models.FileField(upload_to="reviews")
 
 
 class CollectionProduct(models.Model):

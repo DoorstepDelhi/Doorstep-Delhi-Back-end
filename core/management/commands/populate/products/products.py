@@ -19,7 +19,7 @@ from product.models import (
     Brand,
 )
 from store.models import Store
-from .categories import add_categories
+from .categories import add_categories, add_brands
 
 fake = Faker()
 Faker.seed(999)
@@ -174,10 +174,10 @@ def add_product_images(product):
         [
             ProductImage(
                 product=product,
-                image=fake.image_url(),
+                image=f'products/({fake.random_int(min=1, max=490)+i}).jpg',
                 alt=fake.word(),
             )
-            for _ in range(n)
+            for i in range(n)
         ]
     )
 
@@ -261,20 +261,5 @@ def add_collection_products(n):
                 product=products[fake.unique.random_int(max=products.count() - 1)]
             )
             for _ in range(n)
-        ]
-    )
-
-
-def add_brands():
-    Brand.objects.bulk_create(
-        [
-            Brand(
-                name=fake.unique.word(),
-                image=fake.image_url(),
-                alt=fake.word(),
-                description=fake.text(),
-            )
-            for _ in range(20)
-
         ]
     )

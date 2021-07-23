@@ -39,7 +39,8 @@ class RoomViewset(viewsets.ModelViewSet):
 
     def list(self, request):
         queryset = self.get_queryset()
-        serializer = RoomListSerializer(queryset, many=True)
+        context = {'request':request}
+        serializer = RoomListSerializer(queryset, many=True, context=context)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], name='room-users')
@@ -54,20 +55,23 @@ class RoomViewset(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], name='room-users')
     def users(self, request, pk=None):
         users = RoomUser.objects.filter(room__id=pk)
-        serializer = RoomUserSerializer(users, many=True)
+        context = {'request': request}
+        serializer = RoomUserSerializer(users, many=True, context=context)
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'], name='room-orders')
     def orders(self, request, pk=None):
         orders = RoomOrder.objects.filter(room__id=pk)
-        serializer = RoomOrderSerializer(orders, many=True)
+        context = {'request': request}
+        serializer = RoomOrderSerializer(orders, many=True, context=context)
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'], name='room-orders')
     def chats(self, request, pk=None):
         room = self.get_object()
         messages = Message.objects.filter(room=room).order_by("-created_on")
-        serializer = MessageSerializer(messages, many=True)
+        context = {'request': request}
+        serializer = MessageSerializer(messages, many=True, context=context)
         return Response(serializer.data)
 
 
@@ -78,7 +82,8 @@ class RoomWishlistProductViewset(viewsets.ModelViewSet):
 
     def list(self, request):
         queryset = self.queryset
-        serializer = RoomWishlistProductSerializer(queryset, many=True)
+        context = {'request': request}
+        serializer = RoomWishlistProductSerializer(queryset, many=True, context=context)
         return Response(serializer.data)
 
 

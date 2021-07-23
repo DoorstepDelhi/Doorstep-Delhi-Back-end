@@ -35,12 +35,12 @@ class CategoryListSerializer(serializers.ModelSerializer):
 
     def get_sub_categories(self, obj):
         sub_categories = SubCategory.objects.filter(category=obj)
-        serializer = SubCategoryListSerializer(sub_categories, many=True)
+        serializer = SubCategoryListSerializer(sub_categories, many=True, context=self.context)
         return serializer.data
 
     def get_products(self, obj):
         products = Product.objects.filter(Q(category=obj) | Q(sub_category__category=obj))[:10]
-        serializer = ProductListSerializer(products, many=True)
+        serializer = ProductListSerializer(products, many=True, context=self.context)
         return serializer.data
 
 
@@ -58,7 +58,7 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
 
     def get_sub_categories(self, obj):
         sub_categories = SubCategory.objects.filter(category=obj)
-        serializer = SubCategoryDetailSerializer(sub_categories, many=True)
+        serializer = SubCategoryDetailSerializer(sub_categories, many=True, context=self.context)
         return serializer.data
 
 
@@ -85,7 +85,7 @@ class SubCategoryDetailSerializer(serializers.ModelSerializer):
 
     def get_products(self, obj):
         products = Product.objects.filter(sub_category=obj)
-        serializer = ProductListSerializer(products, many=True)
+        serializer = ProductListSerializer(products, many=True, context=self.context)
         return serializer.data
 
 

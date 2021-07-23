@@ -13,7 +13,7 @@ class Notification(models.Model):
     title_hi = models.CharField(max_length=256)
     description = models.TextField(blank=True, null=True)
     description_hi = models.TextField(blank=True, null=True)
-    image = models.ImageField(blank=True, null=True)
+    image = models.ImageField(blank=True, null=True, upload_to="notifications")
     link = models.CharField(max_length=256, blank=True, null=True)
     is_dismissed = models.BooleanField(default=False)
     is_promotional = models.BooleanField(default=False)

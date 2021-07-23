@@ -35,7 +35,7 @@ def populate_room(n):
             name=fake.word(),
             title=fake.text(max_nb_chars=200),
             description=fake.paragraph(nb_sentences=5),
-            image=fake.image_url(),
+            image=f'rooms/({fake.random_int(min=1, max=150)}).jpg',
             created_at=fake.date_time_this_month()
         )
         populate_room_users(room)

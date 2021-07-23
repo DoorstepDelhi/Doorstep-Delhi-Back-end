@@ -22,14 +22,15 @@ def add_superuser():
     first_name = fake.first_name()
     last_name = fake.last_name()
     password = fake.password(length=12)
-    user = User.objects.create_superuser(username=username, first_name=first_name, last_name=last_name, password="admin")
+    user = User.objects.create_superuser(username=username, first_name=first_name, last_name=last_name, password="admin",
+                                         profile_pic=f'users/({fake.random_int(min=1, max=200)}).png',)
     add_addresses(user)
 
 
 def add_addresses(user):
-    user = User.objects.create_user(username='8888888888', password="admin")
-    user = User.objects.create_user(username='7777777777', password="admin")
-    user = User.objects.create_user(username='6666666666', password="admin")
+    # user = User.objects.create_user(username='8888888888', password="admin")
+    # user = User.objects.create_user(username='7777777777', password="admin")
+    # user = User.objects.create_user(username='6666666666', password="admin")
     Address.objects.bulk_create(
         [
             Address(
@@ -57,6 +58,7 @@ def add_user():
         first_name=first_name,
         last_name=last_name,
         password=password,
+        profile_pic=f'users/({fake.random_int(min=1, max=200)}).png',
     )
     add_addresses(user)
     addresses = Address.objects.filter(user=user)

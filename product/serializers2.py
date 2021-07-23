@@ -164,7 +164,7 @@ class BrandListSerializer(serializers.ModelSerializer):
 
     def get_products(self, obj):
         products = Product.objects.filter(brand=obj)[:10]
-        serializer = ProductListSerializer(products, many=True)
+        serializer = ProductListSerializer(products, many=True, context=self.context)
         return serializer.data
 
 

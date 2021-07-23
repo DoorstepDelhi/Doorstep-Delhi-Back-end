@@ -72,14 +72,14 @@ class TokenSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     """Serializes User instances"""
 
-    profile_pic = VersatileImageFieldSerializer(
-        sizes=[
-            ("full_size", "url"),
-            ("thumbnail", "thumbnail__100x100"),
-            ("medium_square_crop", "crop__400x400"),
-            ("small_square_crop", "crop__50x50"),
-        ]
-    )
+    # profile_pic = VersatileImageFieldSerializer(
+    #     sizes=[
+    #         ("full_size", "url"),
+    #         ("thumbnail", "thumbnail__100x100"),
+    #         ("medium_square_crop", "crop__400x400"),
+    #         ("small_square_crop", "crop__50x50"),
+    #     ]
+    # )
 
     class Meta:
         model = User

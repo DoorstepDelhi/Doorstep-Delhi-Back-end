@@ -87,8 +87,8 @@ class CategoryViewSet(viewsets.ModelViewSet):
                 categories = categories.order_by("name")
             elif sort == "namedsc":
                 categories = categories.order_by("-name")
-
-        serializer = CategoryListSerializer(categories, many=True)
+        serializer_context = {"request": request}
+        serializer = CategoryListSerializer(categories, many=True, context=serializer_context)
         return Response(serializer.data)
 
 
@@ -136,7 +136,8 @@ class CollectionViewSet(viewsets.ModelViewSet):
     # @method_decorator(cache_page(60 * 60 * 24))
     def list(self, request):
         queryset = self.queryset
-        serializer = self.serializer_class(queryset, many=True)
+        serializer_context = {"request": request}
+        serializer = self.serializer_class(queryset, many=True, context=serializer_context)
         return Response(serializer.data)
 
     # @method_decorator(cache_page(60 * 60 * 24))
@@ -144,7 +145,8 @@ class CollectionViewSet(viewsets.ModelViewSet):
     def products(self, request, pk=None):
         collection = self.get_object()
         products = collection.products.all()
-        serializer = ProductListSerializer(products, many=True)
+        serializer_context = {"request": request}
+        serializer = ProductListSerializer(products, many=True, context=serializer_context)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -185,13 +187,15 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         products = self.get_queryset()
-        serializer = ProductListSerializer(products, many=True)
+        serializer_context = {"request": request}
+        serializer = ProductListSerializer(products, many=True, context=serializer_context)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], permission_classes=[])
     def flash_sales(self, request):
         products = Product.objects.all()[:6]
-        serializer = ProductListSerializer(products, many=True)
+        serializer_context = {"request": request}
+        serializer = ProductListSerializer(products, many=True, context=serializer_context)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
@@ -258,8 +262,8 @@ class ProductVariantViewSet(viewsets.ModelViewSet):
             OrderLine.objects.create(
                 variant=product_variant, quantity=1, quantity_fulfilled=0, order=order
             )
-
-            serializer = OrderSerializer(order, many=False)
+            serializer_context = {"request": request}
+            serializer = OrderSerializer(order, many=False, context=serializer_context)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         else:
@@ -284,5 +288,6 @@ class BrandViewSet(viewsets.ModelViewSet):
     # @method_decorator(cache_page(60 * 60 * 24))
     def list(self, request, *args, **kwargs):
         brands = self.get_queryset()
-        serializer = BrandListSerializer(brands, many=True)
+        serializer_context = {"request":request}
+        serializer = BrandListSerializer(brands, many=True, context=serializer_context)
         return Response(serializer.data, status=status.HTTP_200_OK)
