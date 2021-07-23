@@ -153,7 +153,6 @@ class CollectionViewSet(viewsets.ModelViewSet):
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductDetailSerializer
     permission_classes = [IsAdminOrReadOnly]
-    
 
     def get_queryset(self):
         # if cache.get("all_products"):
@@ -191,7 +190,14 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = ProductListSerializer(products, many=True, context=serializer_context)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=["get"], permission_classes=[])
+    @action(detail=True, methods=["get"], permission_classes=[AllowAny])
+    def reviews(self, request, pk):
+        product = self.get_object()
+        reviews = ProductReview.objects.filter(product=product)
+        serializer = ProductReviewSerializer(reviews, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], permission_classes=[AllowAny])
     def flash_sales(self, request):
         products = Product.objects.all()[:6]
         serializer_context = {"request": request}
@@ -240,7 +246,7 @@ class ProductVariantViewSet(viewsets.ModelViewSet):
         productVariants = ProductVariant.objects.all()
         return productVariants
 
-    @action(detail=True, methods=["get"], permission_classes=[IsAuthenticated])  # wholsale_min_qty constraint not applied
+    @action(detail=True, methods=["get"], permission_classes=[IsAuthenticated])  #wholsale_min_qty constraint not applied
     def add_to_cart(self, request, pk):
         current_user = request.user
         product_variant = self.get_object()

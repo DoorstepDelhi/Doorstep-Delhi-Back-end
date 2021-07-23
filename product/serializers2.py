@@ -19,7 +19,7 @@ from product.models import (
 )
 from store.serializers import StoreSerializer
 
-from product.serializers.category import CategoryListSerializer
+from product.serializers.category import CategoryListSerializer, CategoryListSerializer2
 from product.serializers.product import ProductListSerializer
 
 
@@ -150,6 +150,13 @@ class ReviewInputSerializer(serializers.ModelSerializer):
         ]
 
 
+class BrandListSerializer2(serializers.ModelSerializer):
+
+    class Meta:
+        model = Brand
+        fields = ["id", "color", "name", "image", "alt"]
+
+
 class BrandListSerializer(serializers.ModelSerializer):
     products_count = serializers.SerializerMethodField(read_only=True)
     products = serializers.SerializerMethodField()
@@ -191,6 +198,7 @@ class ProductPriceSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductPrice
         fields = (
+            "id",
             "product",
             "min_qty",
             "price",
@@ -199,13 +207,13 @@ class ProductPriceSerializer(serializers.ModelSerializer):
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
-    product_type = ProductTypeSerializer()
-    category = CategoryListSerializer()
+    # product_type = ProductTypeSerializer()
+    category = CategoryListSerializer2()
     variations = VariationSerializer()
     customization = CustomizationSerializer(read_only=True, many=True)
     variants = serializers.SerializerMethodField(read_only=True)
-    reviews = serializers.SerializerMethodField(read_only=True)
-    brand = BrandListSerializer()
+    # reviews = serializers.SerializerMethodField(read_only=True)
+    brand = BrandListSerializer2()
     prices = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -224,9 +232,9 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'product_qty',
             'visible_in_listings',
             'variants',
-            'reviews',
+            # 'reviews',
             'prices',
-
+            'views',
         ]
 
     def create(self, validated_data):
@@ -255,10 +263,10 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         serializer = ProductVariantSerializer(variants, many=True)
         return serializer.data
 
-    def get_reviews(self, obj):
-        reviews = ProductReview.objects.filter(product=obj)
-        serializer = ProductReviewSerializer(reviews, many=True)
-        return serializer.data
+    # def get_reviews(self, obj):
+    #     reviews = ProductReview.objects.filter(product=obj)
+    #     serializer = ProductReviewSerializer(reviews, many=True)
+    #     return serializer.data
 
 
 class CollectionSerializer(serializers.ModelSerializer):

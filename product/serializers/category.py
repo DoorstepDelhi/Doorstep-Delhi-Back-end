@@ -19,6 +19,16 @@ from product.models import (
 from product.serializers.product import ProductListSerializer
 
 
+class CategoryListSerializer2(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = [
+            "id",
+            "name",
+            "icon",
+        ]
+
+
 class CategoryListSerializer(serializers.ModelSerializer):
     sub_categories = serializers.SerializerMethodField(read_only=True)
     products = serializers.SerializerMethodField(read_only=True)

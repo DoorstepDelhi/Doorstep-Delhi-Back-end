@@ -158,3 +158,20 @@ class FullAddressSerializer(serializers.ModelSerializer):
             "postal_code",
             "phone",
         ]
+
+
+class NearbyUserSerializer(serializers.ModelSerializer):
+    distance = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'first_name',
+            'last_name',
+            'profile_pic',
+            'distance',
+        )
+
+    def get_distace(self, obj):
+        return 10

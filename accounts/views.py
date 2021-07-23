@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, get_list_or_404
-from .serializers import AddressSerializer, UserSerializer
+from .serializers import AddressSerializer, UserSerializer, NearbyUserSerializer
 from .models import Address, User
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
@@ -67,7 +67,7 @@ class UserViewSet(viewsets.ModelViewSet):
         # longitude = request.data['long']
         # latitude = request.data['lat']
         users = User.objects.all()[:20]
-        serializer = UserSerializer(users, many=True)
+        serializer = NearbyUserSerializer(users, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated,], name="Nearby Groups")
