@@ -23,10 +23,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 self.channel_name
             )
             await self.accept()
-            self.room_username_list = await get_room_username_list(self.room)
-            await self.send(text_data=json.dumps({
-                'message': "Accepted",
-            }))
+
+            # await self.send(text_data=json.dumps({
+            #     'message': "Accepted",
+            # }))
         else:
             await self.send(text_data=json.dumps({
                 'message': "Wrong User or Room ID",

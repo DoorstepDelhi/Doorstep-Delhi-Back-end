@@ -224,9 +224,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
 class MessageSerializer(serializers.ModelSerializer):
     file_field = serializers.FileField(allow_empty_file = True)
     created_on = serializers.SerializerMethodField(read_only=True)
-    user = serializers.HiddenField(
-        default=serializers.CurrentUserDefault()
-    )
+    # user = serializers.SerializerMethodField()
     type = serializers.SerializerMethodField(read_only=True)
     product = ProductListSerializer()
 
