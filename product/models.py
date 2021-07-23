@@ -150,7 +150,7 @@ class ProductPrice(models.Model):
     price = models.PositiveBigIntegerField()
     discounted_price = models.PositiveBigIntegerField()
     store = models.ForeignKey(
-        "store.Store", related_name="wholesale_products", on_delete=models.CASCADE
+        "store.Store", related_name="wholesale_products", on_delete=models.CASCADE, null=True
     )
 
 # class VariantChoice(models.Model):

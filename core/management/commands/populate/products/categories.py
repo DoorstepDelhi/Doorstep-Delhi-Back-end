@@ -21,7 +21,7 @@ def add_categories():
             Category(name='Tool', icon="tool"),
             Category(name='Game', icon="game"),
             Category(name='Home', icon="vacuum"),
-
+            Category(name='Electronics', icon="smartphone"),
         ]
     )
 

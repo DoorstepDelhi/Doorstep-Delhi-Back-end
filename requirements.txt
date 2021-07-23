@@ -35,3 +35,4 @@ django-cloudinary-storage
 xhtml2pdf
 python-magic
 libmagic
+pandas

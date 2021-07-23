@@ -32,10 +32,63 @@ def populate(n):
     add_variations()
     add_customizations()
     add_brands()
-    add_products(n)
+    populate_smartphones()
+    # add_products(n)
     # add_review_file(n)
     add_collections()
-    add_collection_products(n)
+    # add_collection_products(n)
+
+
+def populate_smartphones():
+    category = Category.objects.filter(name="Electronics")[0]
+    sub_category = SubCategory.objects.create(category=category, name="Smartphone")
+    product_types = ProductType.objects.all()
+
+    import pandas as pd
+    df = pd.read_csv("phones.csv")
+    for row in df.iterrows():
+        title = row[1][1]
+        price = float(row[1][3].replace(",", ""))
+        brand = row[1][4]
+        if brand == "Uknown":
+            continue
+        if title == "":
+            continue
+        brand_qs = Brand.objects.filter(name=brand)
+        if brand_qs.exists():
+            brand = brand_qs[0]
+        else:
+            brand = Brand.objects.create(name=brand, image='brands/logo-03.png', alt=brand, description="", color="greenAccent")
+        product = Product.objects.create(
+            product_type=product_types[fake.random_int(max=product_types.count() - 1)],
+            name=title,
+            description=title,
+            category=category,
+            sub_category=sub_category,
+            charge_taxes=True,
+            product_qty=1,
+            views=fake.random_int(max=10000),
+            visible_in_listings=True,
+            brand=brand
+        )
+        ProductPrice.objects.create(
+            product=product,
+            min_qty=fake.random_int(min=10, max=100),
+            price=price*80,
+            discounted_price=price*73,
+        )
+        ProductImage.objects.create(
+            product=product,
+            image=f'products/{fake.random_int(min=1, max=5)}.png',
+            alt=fake.word(),
+        )
+        ProductImage.objects.create(
+            product=product,
+            image=f'products/{fake.random_int(min=1, max=5)}.png',
+            alt=fake.word(),
+        )
+        add_product_variant(product)
+        add_product_reviews(product)
 
 
 def add_sub_categories(N):

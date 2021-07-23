@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from .models import Room, RoomOrder, RoomUser, RoomWishlistProduct, UserOrderLine
 from rest_framework import serializers, viewsets
+from rest_framework.views import APIView
 
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -10,8 +11,12 @@ from room.serializers import MessageSerializer, RoomOrderSerializer, RoomSeriali
     RoomWishlistProductSerializer, RoomOrderLineSerializer, RoomLastMessageSerializer, Message
 from shop.models import OrderEvent
 from django.db.models import Q, F
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 from .pagination import CustomPagination
+from product.models import Product
+from product.serializers.product import ProductListSerializer
 
 
 def index(request):
@@ -128,3 +133,44 @@ class UserOrderLineViewSet(viewsets.ModelViewSet):  # verify
                 orderlines = UserOrderLine.objects.filter(order__in=orderevents.values_list('order', flat=True))
 
         return userorderlines
+
+
+class RecommendationKeywords(APIView):
+    def get(self, request):
+        return Response("serializer.errors, status=status.HTTP_400_BAD_REQUEST")
+
+    def post(self, request, format=None):
+        print("DATA - -------------------------------")
+        print(request.data)
+        products = Product.objects.all()
+        parameters = request.data['queryResult']['parameters']
+        category = parameters.get("category", None)
+        if category:
+            products = products.filter(category__name__icontains=category)
+        brand = parameters.get("brand", None)
+        if brand:
+            products = products.filter(brand__name__icontains=brand)
+        price_range = parameters.get("price_range", None)
+        if price_range:
+            if price_range == "high":
+                products = products.order_by('name')
+            else:
+                products = products.order_by('name')
+        number_integer = parameters.get("number-integer", None)
+        if len(number_integer) == 1:
+            products = products.filter(product_qty__lte=number_integer[0])
+        elif len(number_integer) > 1:
+            products = products.filter(product_qty__gte=number_integer[0], product_qty__lte=number_integer[1])
+        serializer = ProductListSerializer(products, many=True, context={"request": request})
+        print("DATA - -------------------------------")
+        print(parameters)
+        print(category, brand, price_range, number_integer)
+        room_group_name = 'recommendations'
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            room_group_name, {
+                'type': "send_to_websocket",
+                'message': serializer.data
+            }
+        )
+        return Response("serializer.errors, status=status.HTTP_400_BAD_REQUEST")

@@ -10,10 +10,9 @@ router.register("rooms-wishlist", views.RoomWishlistProductViewset, basename="ro
 router.register("user-orders", views.UserOrderLineViewSet, basename="user-orders")
 
 
-
 urlpatterns = [
+    path('keyword/', views.RecommendationKeywords.as_view()),
     path('chat/', views.index, name='index'),
     path("", include(router.urls)),
     path('<str:room_name>/', views.room, name='room'),
-
 ]
