@@ -70,6 +70,17 @@ class TokenSerializer(serializers.ModelSerializer):
         return None
 
 
+class UserListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'first_name',
+            'last_name',
+            'profile_pic',
+        )
+
+
 class UserSerializer(serializers.ModelSerializer):
     """Serializes User instances"""
 

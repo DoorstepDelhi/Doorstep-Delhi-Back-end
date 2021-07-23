@@ -33,7 +33,7 @@ def populate_room(n):
     for i in range(n):
         room = Room.objects.create(
             name=fake.word(),
-            title=fake.text(max_nb_chars=200),
+            title=fake.text(max_nb_chars=25),
             description=fake.paragraph(nb_sentences=5),
             image=f'rooms/({fake.random_int(min=1, max=150)}).jpg',
             created_at=fake.date_time_this_month()
@@ -184,13 +184,13 @@ def populate_message(room):
         [
             Message(
                 file_field=fake.file_name(),
-                message_text=fake.text(max_nb_chars=200),
+                message_text=fake.text(max_nb_chars=75),
                 product = products[random.randint(0, products.count() - 1)],
                 user=users[fake.random_int(min=0, max=users.count()-1)],
                 created_on=make_aware(datetime.now()),
                 room=room
             )
-            for _ in range(fake.random_int(min=100, max=200))
+            for _ in range(fake.random_int(min=5, max=10))
         ]
     )
 

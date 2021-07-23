@@ -4,7 +4,7 @@ from typing import AsyncContextManager
 from rest_framework import serializers
 from room.models import Message, Room, RoomRecommendedProduct, RoomUser,RoomWishlistProduct,WishlistProductVote,RoomOrder, RoomOrderLine, UserOrderLine, OrderEvent,Invoice, Message
 from product.serializers2 import ProductListSerializer
-from accounts.serializers import AddressSerializer, UserSerializer
+from accounts.serializers import AddressSerializer, UserSerializer, UserListSerializer
 from store.serializers import PickupPointSerializer, ShippingMethodSerializer
 
 
@@ -224,7 +224,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
 class MessageSerializer(serializers.ModelSerializer):
     file_field = serializers.FileField(allow_empty_file = True)
     created_on = serializers.SerializerMethodField(read_only=True)
-    # user = serializers.SerializerMethodField()
+    user = UserListSerializer()
     type = serializers.SerializerMethodField(read_only=True)
     product = ProductListSerializer()
 
