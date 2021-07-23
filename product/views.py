@@ -197,6 +197,19 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = ProductReviewSerializer(reviews, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=["get"], permission_classes=[AllowAny])
+    def related(self, request, pk):
+        product = self.get_object()
+        if product.sub_category:
+            products = Product.objects.filter(sub_category=product.sub_category)
+        elif product.category:
+            products = Product.objects.filter(category=product.category)
+        else:
+            products = Product.objects.all()
+        products = products[:5]
+        serializer = ProductListSerializer(products, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=["get"], permission_classes=[AllowAny])
     def flash_sales(self, request):
         products = Product.objects.all()[:6]
