@@ -41,7 +41,7 @@ def populate(n):
 
 def populate_smartphones():
     category = Category.objects.filter(name="Electronics")[0]
-    sub_category = SubCategory.objects.create(category=category, name="Smartphone")
+    sub_category = SubCategory.objects.create(category=category, name="Smartphones")
     product_types = ProductType.objects.all()
 
     import pandas as pd
@@ -66,7 +66,7 @@ def populate_smartphones():
             category=category,
             sub_category=sub_category,
             charge_taxes=True,
-            product_qty=1,
+            product_qty=price*73,
             views=fake.random_int(max=10000),
             visible_in_listings=True,
             brand=brand

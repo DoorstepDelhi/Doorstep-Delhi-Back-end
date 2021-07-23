@@ -1,7 +1,10 @@
+from functools import reduce
+
 from django.shortcuts import render
 from .models import Room, RoomOrder, RoomUser, RoomWishlistProduct, UserOrderLine
 from rest_framework import serializers, viewsets
 from rest_framework.views import APIView
+from django.contrib.postgres.search import TrigramSimilarity
 
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -11,6 +14,8 @@ from room.serializers import MessageSerializer, RoomOrderSerializer, RoomSeriali
     RoomWishlistProductSerializer, RoomOrderLineSerializer, RoomLastMessageSerializer, Message
 from shop.models import OrderEvent
 from django.db.models import Q, F
+import operator
+
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
@@ -136,32 +141,40 @@ class UserOrderLineViewSet(viewsets.ModelViewSet):  # verify
 
 
 class RecommendationKeywords(APIView):
-    def get(self, request):
-        return Response("serializer.errors, status=status.HTTP_400_BAD_REQUEST")
 
     def post(self, request, format=None):
         print("DATA - -------------------------------")
-        print(request.data)
         products = Product.objects.all()
         parameters = request.data['queryResult']['parameters']
-        category = parameters.get("category", None)
-        if category:
-            products = products.filter(category__name__icontains=category)
-        brand = parameters.get("brand", None)
-        if brand:
-            products = products.filter(brand__name__icontains=brand)
-        price_range = parameters.get("price_range", None)
+        category = list(parameters.get("category", None))
+        if len(category) > 0:
+            query = reduce(operator.or_, (Q(sub_category__name__icontains=item) for item in category))
+            products = products.filter(query)
+        brand = list(parameters.get("brand", None))
+        if len(brand) > 0:
+            query = reduce(operator.or_, (Q(brand__name__icontains=item) for item in brand))
+            products = products.filter(query)
+        price_range = list(parameters.get("price_range", None))
         if price_range:
-            if price_range == "high":
-                products = products.order_by('name')
+            if "high" in price_range:
+                products = products.order_by('-product_qty')
             else:
-                products = products.order_by('name')
-        number_integer = parameters.get("number-integer", None)
+                products = products.order_by('product_qty')
+        number_integer2 = list(parameters.get("number-integer", None))
+        number_integer = []
+        for integer in number_integer2:
+            if integer > 5000:
+                number_integer.append(integer)
         if len(number_integer) == 1:
             products = products.filter(product_qty__lte=number_integer[0])
         elif len(number_integer) > 1:
-            products = products.filter(product_qty__gte=number_integer[0], product_qty__lte=number_integer[1])
+            number_integer.sort()
+            products = products.filter(product_qty__gte=number_integer[0], product_qty__lte=number_integer[-1])
+        print(products)
         serializer = ProductListSerializer(products, many=True, context={"request": request})
+        # products = products.annotate(similarity=TrigramSimilarity('name', text), ).filter(
+        #     similarity__gt=0.3).order_by('-similarity')
+        print(serializer.data)
         print("DATA - -------------------------------")
         print(parameters)
         print(category, brand, price_range, number_integer)
@@ -173,4 +186,4 @@ class RecommendationKeywords(APIView):
                 'message': serializer.data
             }
         )
-        return Response("serializer.errors, status=status.HTTP_400_BAD_REQUEST")
+        return Response("Thanks")

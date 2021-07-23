@@ -193,15 +193,15 @@ class Message(models.Model):
         return self.user.__str__() + " : " + self.message_text
 
 
-@receiver(post_save, sender=Message, dispatch_uid="send_recommendsations")
-def send_notification(sender, instance, **kwargs):
-    if instance.message_text:
-        print("Starting reading message")
-        room_group_name = 'recommendations_%s' % instance.room.name
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            room_group_name, {
-                'type': "send_room_recommendations",
-                'message': instance.message_text
-            }
-        )
+# @receiver(post_save, sender=Message, dispatch_uid="send_recommendsations")
+# def send_notification(sender, instance, **kwargs):
+#     if instance.message_text:
+#         print("Starting reading message")
+#         room_group_name = 'recommendations_%s' % instance.room.name
+#         channel_layer = get_channel_layer()
+#         async_to_sync(channel_layer.group_send)(
+#             room_group_name, {
+#                 'type': "send_room_recommendations",
+#                 'message': instance.message_text
+#             }
+#         )

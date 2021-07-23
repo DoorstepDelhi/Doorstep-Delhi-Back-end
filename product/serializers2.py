@@ -215,6 +215,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     # reviews = serializers.SerializerMethodField(read_only=True)
     brand = BrandListSerializer2()
     prices = serializers.SerializerMethodField(read_only=True)
+    images = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Product
@@ -235,6 +236,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             # 'reviews',
             'prices',
             'views',
+            'images'
         ]
 
     def create(self, validated_data):
@@ -252,6 +254,11 @@ class ProductDetailSerializer(serializers.ModelSerializer):
                 **product
             )
         return products
+
+    def get_images(self, obj):
+        images = ProductImage.objects.filter(product=obj)
+        serializer = ProductImageSerializer(images, many=True)
+        return serializer.data
 
     def get_prices(self, obj):
         prices = ProductPrice.objects.filter(product=obj)

@@ -41,8 +41,8 @@ class ChatRecommendationConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json(event)
 
     async def send_room_recommendations(self, event):
-        text = event["message"]
-        data = await get_room_recommendations(text)
+        data = event["message"]
+        # data = await get_room_recommendations(text)
         await self.send_json(data)
 
 
