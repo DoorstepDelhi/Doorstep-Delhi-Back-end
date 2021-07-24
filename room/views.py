@@ -79,7 +79,7 @@ class RoomViewset(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], name='room-orders')
     def chats(self, request, pk=None):
         room = self.get_object()
-        messages = Message.objects.filter(room=room).order_by("-created_on")
+        messages = Message.objects.filter(room=room).order_by("created_on")
         context = {'request': request}
         serializer = MessageSerializer(messages, many=True, context=context)
         return Response(serializer.data)
@@ -143,8 +143,7 @@ class UserOrderLineViewSet(viewsets.ModelViewSet):  # verify
 class RecommendationKeywords(APIView):
 
     def post(self, request, format=None):
-        print("DATA - -------------------------------")
-        print(request.data)
+        # print(request.data)
         products = Product.objects.all()
         parameters = request.data['queryResult']['parameters']
         query_text = request.data['queryResult']['queryText']
@@ -177,11 +176,7 @@ class RecommendationKeywords(APIView):
         # print(products)
         # products = products.annotate(similarity=TrigramSimilarity('name', query_text)).filter(
         #     similarity__gt=0.3).order_by('-similarity')
-        serializer = ProductListSerializer(products, many=True, context={"request": request})
-        print(serializer.data)
-        print("DATA - -------------------------------")
-        print(parameters)
-        print(category, brand, price_range, number_integer)
+        serializer = ProductListSerializer(products[:10], many=True, context={"request": request})
         room_group_name = 'recommendations'
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
