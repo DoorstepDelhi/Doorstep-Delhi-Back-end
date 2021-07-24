@@ -7,4 +7,4 @@ WORKDIR /usr/src/app
 COPY requirements.txt ./
 ADD . /usr/src/app/
 RUN pip install -r requirements.txt
-RUN python manage.py migrate
+#RUN python manage.py migrate

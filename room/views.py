@@ -144,8 +144,10 @@ class RecommendationKeywords(APIView):
 
     def post(self, request, format=None):
         print("DATA - -------------------------------")
+        print(request.data)
         products = Product.objects.all()
         parameters = request.data['queryResult']['parameters']
+        query_text = request.data['queryResult']['queryText']
         category = list(parameters.get("category", None))
         if len(category) > 0:
             query = reduce(operator.or_, (Q(sub_category__name__icontains=item) for item in category))
@@ -171,9 +173,11 @@ class RecommendationKeywords(APIView):
             number_integer.sort()
             products = products.filter(product_qty__gte=number_integer[0], product_qty__lte=number_integer[-1])
         print(products)
-        serializer = ProductListSerializer(products, many=True, context={"request": request})
-        # products = products.annotate(similarity=TrigramSimilarity('name', text), ).filter(
+        # products = products.annotate(similarity=TrigramSimilarity('name', query_text))
+        # print(products)
+        # products = products.annotate(similarity=TrigramSimilarity('name', query_text)).filter(
         #     similarity__gt=0.3).order_by('-similarity')
+        serializer = ProductListSerializer(products, many=True, context={"request": request})
         print(serializer.data)
         print("DATA - -------------------------------")
         print(parameters)

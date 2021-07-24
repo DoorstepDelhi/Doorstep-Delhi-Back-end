@@ -47,7 +47,7 @@ def populate_smartphones():
     import pandas as pd
     df = pd.read_csv("phones.csv")
     for row in df.iterrows():
-        title = row[1][1]
+        title = str(row[1][1])
         price = float(row[1][3].replace(",", ""))
         brand = row[1][4]
         if brand == "Uknown":
@@ -61,7 +61,7 @@ def populate_smartphones():
             brand = Brand.objects.create(name=brand, image='brands/logo-03.png', alt=brand, description="", color="greenAccent")
         product = Product.objects.create(
             product_type=product_types[fake.random_int(max=product_types.count() - 1)],
-            name=title,
+            name=title[:200],
             description=title,
             category=category,
             sub_category=sub_category,

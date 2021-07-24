@@ -212,7 +212,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     variations = VariationSerializer()
     customization = CustomizationSerializer(read_only=True, many=True)
     variants = serializers.SerializerMethodField(read_only=True)
-    # reviews = serializers.SerializerMethodField(read_only=True)
+    # avg_review = serializers.SerializerMethodField(read_only=True)
     brand = BrandListSerializer2()
     prices = serializers.SerializerMethodField(read_only=True)
     images = serializers.SerializerMethodField(read_only=True)
@@ -233,7 +233,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'product_qty',
             'visible_in_listings',
             'variants',
-            # 'reviews',
+            # 'avg_review',
             'prices',
             'views',
             'images'
@@ -257,23 +257,21 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
     def get_images(self, obj):
         images = ProductImage.objects.filter(product=obj)
-        serializer = ProductImageSerializer(images, many=True)
+        serializer = ProductImageSerializer(images, many=True, context=self.context)
         return serializer.data
 
     def get_prices(self, obj):
         prices = ProductPrice.objects.filter(product=obj)
-        serializer = ProductPriceSerializer(prices, many=True)
+        serializer = ProductPriceSerializer(prices, many=True, context=self.context)
         return serializer.data
 
     def get_variants(self, obj):
         variants = ProductVariant.objects.filter(product=obj)
-        serializer = ProductVariantSerializer(variants, many=True)
+        serializer = ProductVariantSerializer(variants, many=True, context=self.context)
         return serializer.data
 
-    # def get_reviews(self, obj):
-    #     reviews = ProductReview.objects.filter(product=obj)
-    #     serializer = ProductReviewSerializer(reviews, many=True)
-    #     return serializer.data
+    # def get_avg_review(self, obj):
+    #     return obj.average_rating
 
 
 class CollectionSerializer(serializers.ModelSerializer):

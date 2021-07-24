@@ -77,7 +77,7 @@ def populate_room_wishlist_product(room):
             added_at=fake.date_time_this_month(),
             votes=fake.random_int(max=users.count()),
         )
-        populate_wishlist_product_vote(wishlist_item)
+        # populate_wishlist_product_vote(wishlist_item)
 
 
 def populate_wishlist_product_vote(wishlist_item):

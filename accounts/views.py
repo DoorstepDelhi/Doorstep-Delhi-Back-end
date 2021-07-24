@@ -67,7 +67,7 @@ class UserViewSet(viewsets.ModelViewSet):
         # longitude = request.data['long']
         # latitude = request.data['lat']
         users = User.objects.all()[:20]
-        serializer = NearbyUserSerializer(users, many=True)
+        serializer = NearbyUserSerializer(users, many=True, context={"request":request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated,], name="Nearby Groups")
@@ -75,7 +75,7 @@ class UserViewSet(viewsets.ModelViewSet):
         # longitude = request.data['long']
         # latitude = request.data['lat']
         rooms = Room.objects.all()[:20]
-        serializer = RoomListSerializer(rooms, many=True)
+        serializer = RoomListSerializer(rooms, many=True, context={"request":request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["get"], permission_classes=[IsAuthenticated,], name="User Default Shipping Address")
