@@ -2,7 +2,7 @@ from functools import reduce
 
 from django.shortcuts import render
 from .models import Room, RoomOrder, RoomUser, RoomWishlistProduct, UserOrderLine
-from rest_framework import serializers, viewsets
+from rest_framework import serializers, viewsets, status
 from rest_framework.views import APIView
 from django.contrib.postgres.search import TrigramSimilarity
 
@@ -51,7 +51,41 @@ class RoomViewset(viewsets.ModelViewSet):
         queryset = self.get_queryset()
         context = {'request':request}
         serializer = RoomListSerializer(queryset, many=True, context=context)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def create(self, request, format=None):
+        users = request.data.get("users", None)
+        if users:
+            users = list(set(map(int, users.strip().strip(",").split(","))))
+            if len(users) > 1:
+                serializer = RoomSerializer(data=request.data)
+                if serializer.is_valid():
+                    serializer.save()
+                    room_user = RoomUser.objects.create(user=request.user, room_id=serializer.data['id'], role="A")
+                    RoomUser.objects.bulk_create(
+                        [
+                            RoomUser(user_id=user, room_id=serializer.data['id'], role="U")
+                            for user in users
+                        ]
+                    )
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "No User Selected"}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], name='Add Users to a Group')
+    def add_users(self, request, format=None):
+        room = self.get_object()
+        users = request.data.get("users", None)
+        if users:
+            users = list(set(map(int, users.strip().strip(",").split(","))))
+            RoomUser.objects.bulk_create(
+                [
+                    RoomUser(user_id=user, room=room, role="U")
+                    for user in users
+                ]
+            )
+            return Response({"success": "Users Added"}, status=status.HTTP_200_OK)
+        return Response({"error": "No User Selected"}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'], name='room-users')
     def last_message(self, request, pk=None):

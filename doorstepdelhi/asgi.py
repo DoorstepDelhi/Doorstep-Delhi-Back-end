@@ -17,6 +17,7 @@ from django.core.asgi import get_asgi_application
 
 import room.routing
 import core.routing
+import webtraffic.routing
 from doorstepdelhi.middleware import TokenAuthMiddlewareStack
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "doorstepdelhi.settings")
@@ -29,7 +30,8 @@ application = ProtocolTypeRouter({
         TokenAuthMiddlewareStack(
             URLRouter(
                 room.routing.websocket_urlpatterns +
-                core.routing.websocket_urlpatterns
+                core.routing.websocket_urlpatterns +
+                webtraffic.routing.websocket_urlpatterns
             )
         )
     ),

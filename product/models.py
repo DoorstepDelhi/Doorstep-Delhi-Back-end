@@ -122,12 +122,11 @@ class Product(models.Model):
     def __str__(self) -> str:
         return self.name
 
+    @cached_property
     def average_rating(self):
-        avg_rating = ProductReview.objects.filter(product__id=self.id).aggregate(ratings=Avg('rating'))
-        rating = avg_rating.get("ratings")
-        return rating
+        avg_rating = ProductReview.objects.filter(product__id=self.id).aggregate(ratings=Avg('rating'))['ratings']
+        return avg_rating
 
-    @staticmethod
     def cheapest_product_variant(self):
         cheapest_variant = ProductVariant.objects.filter(product__id=self.id).aggregate(Min('discounted_price'))
         return cheapest_variant
@@ -166,7 +165,7 @@ class ProductVariant(models.Model):
         "product.Product", related_name="variants", on_delete=models.CASCADE
     )
     variant = models.ForeignKey(
-        "product.Variation", related_name="products", on_delete=models.PROTECT
+        "product.Variation", related_name="product_variants", on_delete=models.PROTECT
     )
     images = models.ManyToManyField("ProductImage", through="VariantImage")
     track_inventory = models.BooleanField(default=True)

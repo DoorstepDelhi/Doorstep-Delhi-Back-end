@@ -38,7 +38,7 @@ class Website(models.Model):
 
 class WebsiteHit(models.Model):
     user = models.ForeignKey("accounts.User", on_delete=models.SET_NULL, null=True)
-    website = models.ForeignKey("webtraffic.Website", on_delete=models.CASCADE)
+    website = models.ForeignKey("webtraffic.Website", on_delete=models.CASCADE, related_name='website_hits')
     type = models.CharField(max_length=1, choices=website_hit_type_choices)
     created_at = models.DateTimeField(auto_now_add=True)
 

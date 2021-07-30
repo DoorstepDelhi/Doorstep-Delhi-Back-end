@@ -21,7 +21,6 @@ class RoomSerializer(serializers.ModelSerializer):
             "image",
             "created_at",
             "deleted_at",
-            "users",
         ]
 
 
@@ -53,6 +52,7 @@ class RoomListSerializer(serializers.ModelSerializer):
 class RoomLastMessageSerializer(serializers.ModelSerializer):
     last_message = serializers.SerializerMethodField(read_only=True)
     unseen_messages = serializers.SerializerMethodField(read_only=True)
+    is_admin = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Room
@@ -63,6 +63,7 @@ class RoomLastMessageSerializer(serializers.ModelSerializer):
             "image",
             "last_message",
             "unseen_messages",
+            "is_admin",
         ]
 
     def get_last_message(self, obj):
@@ -79,6 +80,11 @@ class RoomLastMessageSerializer(serializers.ModelSerializer):
             if messages.exists():
                 return messages.count()
         return None
+
+    def get_is_admin(self, obj):
+        request = self.context.get("request", None)
+        user = request.user
+        return True
 
 
 class RoomUserSerializer(serializers.ModelSerializer):
@@ -100,12 +106,10 @@ class RoomUserSerializer(serializers.ModelSerializer):
 
 
 class RoomWishlistProductSerializer(serializers.ModelSerializer):
-    room = RoomSerializer()
     product = ProductListSerializer()
     user = serializers.HiddenField(
         default=serializers.CurrentUserDefault()
     )
-    added_on = serializers.ReadOnlyField()
 
     class Meta:
         model = RoomWishlistProduct
@@ -114,7 +118,6 @@ class RoomWishlistProductSerializer(serializers.ModelSerializer):
             "room",
             "product",
             "user",
-            "added_on",
             "votes",
         ]
 

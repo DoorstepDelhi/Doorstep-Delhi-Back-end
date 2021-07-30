@@ -1,3 +1,5 @@
+import json
+
 from rest_framework import serializers
 from rest_framework.fields import CurrentUserDefault
 from product.models import (
@@ -18,7 +20,7 @@ from product.models import (
     Brand
 )
 from store.serializers import StoreSerializer
-
+from accounts.serializers import UserListSerializer
 from product.serializers.category import CategoryListSerializer, CategoryListSerializer2
 from product.serializers.product import ProductListSerializer
 
@@ -124,22 +126,28 @@ class ProductVariantSerializer(serializers.ModelSerializer):
 
 class ProductReviewSerializer(serializers.ModelSerializer):
     files = serializers.SerializerMethodField(read_only=True)
+    created_at = serializers.ReadOnlyField()
+    user_detail = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = ProductReview
         fields = [
             "user",
+            "user_detail",
             "product",
             "rating",
             "review",
             'files',
+            'created_at',
         ]
 
     def get_files(self, obj):
         files = ProductReviewFile.objects.filter(review=obj).values_list('file', flat=True)
-        print(files)
         return files
 
+    def get_user_detail(self, obj):
+        serializer = UserListSerializer(obj.user, many=False, context=self.context)
+        return serializer.data
 
 class ReviewInputSerializer(serializers.ModelSerializer):
     class Meta:
@@ -209,10 +217,10 @@ class ProductPriceSerializer(serializers.ModelSerializer):
 class ProductDetailSerializer(serializers.ModelSerializer):
     # product_type = ProductTypeSerializer()
     category = CategoryListSerializer2()
-    variations = VariationSerializer()
+    variations = VariationSerializer(many=True)
     customization = CustomizationSerializer(read_only=True, many=True)
     variants = serializers.SerializerMethodField(read_only=True)
-    # avg_review = serializers.SerializerMethodField(read_only=True)
+    avg_rating = serializers.SerializerMethodField(read_only=True)
     brand = BrandListSerializer2()
     prices = serializers.SerializerMethodField(read_only=True)
     images = serializers.SerializerMethodField(read_only=True)
@@ -233,7 +241,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'product_qty',
             'visible_in_listings',
             'variants',
-            # 'avg_review',
+            'avg_rating',
             'prices',
             'views',
             'images'
@@ -266,12 +274,20 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         return serializer.data
 
     def get_variants(self, obj):
-        variants = ProductVariant.objects.filter(product=obj)
-        serializer = ProductVariantSerializer(variants, many=True, context=self.context)
-        return serializer.data
+        data = []
+        product_variants = ProductVariant.objects.filter(product=obj)
+        variations = Variation.objects.filter(product_variants__in=product_variants).values_list("name", flat=True).distinct()
+        for variation in variations:
+            variants = product_variants.filter(variant__name=variation)
+            serializer = ProductVariantSerializer(variants, many=True, context=self.context)
+            data.append({
+                    "variation": variation,
+                    "items": serializer.data
+                })
+        return data
 
-    # def get_avg_review(self, obj):
-    #     return obj.average_rating
+    def get_avg_rating(self, obj):
+        return round(obj.average_rating, 2)
 
 
 class CollectionSerializer(serializers.ModelSerializer):

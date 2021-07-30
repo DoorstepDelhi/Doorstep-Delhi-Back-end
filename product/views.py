@@ -18,6 +18,7 @@ from django.core.cache.backends.base import DEFAULT_TIMEOUT
 from django.core.cache import cache
 from django.conf import settings
 from store.permissions import IsStoreOwner
+from rest_framework.pagination import LimitOffsetPagination
 
 from product.models import (
     Category,
@@ -52,6 +53,7 @@ from product.serializers2 import (
 from wishlist.models import Wishlist, WishlistItem
 from wishlist.serializers import WishlistItemSerializer
 from accounts.models import Address
+from accounts.serializers import UserListSerializer
 from room.models import RoomWishlistProduct
 from shop.serializers import OrderLineSerializer, OrderSerializer
 from shop.models import Order, OrderLine
@@ -153,6 +155,7 @@ class CollectionViewSet(viewsets.ModelViewSet):
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductDetailSerializer
     permission_classes = [IsAdminOrReadOnly]
+    pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
         # if cache.get("all_products"):
@@ -186,7 +189,13 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         products = self.get_queryset()
+        page = self.paginate_queryset(products)
         serializer_context = {"request": request}
+
+        if page is not None:
+            serializer = ProductListSerializer(page, many=True, context=serializer_context)
+            return self.get_paginated_response(serializer.data)
+
         serializer = ProductListSerializer(products, many=True, context=serializer_context)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -231,6 +240,8 @@ class ProductViewSet(viewsets.ModelViewSet):
                 room_wishlist_product, created = RoomWishlistProduct.objects.get_or_create(room_id=group, product=product)
                 if created:
                     room_wishlist_product.user = request.user
+        else:
+            return Response({"error": "no group selected"}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"status": "success"}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["get"], permission_classes=[IsAuthenticated])

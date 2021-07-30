@@ -5,6 +5,7 @@ from channels.db import database_sync_to_async
 from room.models import Room, RoomUser, Message, RoomWishlistProduct, WishlistProductVote, RoomOrder, RoomOrderLine
 from room.serializers import RoomWishlistProductSerializer
 from accounts.models import User
+from product.models import Product
 
 
 class WishlistConsumer(AsyncJsonWebsocketConsumer):
@@ -23,12 +24,13 @@ class WishlistConsumer(AsyncJsonWebsocketConsumer):
             )
             await self.accept()
             self.room_username_list = await get_room_username_list(self.room)
+            data = await self.get_product_variants()
             await self.send(text_data=json.dumps({
-                'message': "Accepted",
+                'wishlist': data
             }))
         else:
             await self.send(text_data=json.dumps({
-                'message': "Wrong User or Room ID",
+                'error': "Wrong User or Room ID",
             }))
             await self.disconnect(403)
 
@@ -41,94 +43,72 @@ class WishlistConsumer(AsyncJsonWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive_json(self, text_data):
-        if (text_data['sender'] != self.user.username) or (str(text_data['room_id']) != str(self.room.id)):
+        if (text_data['user'] != self.user.id) or (str(text_data['room']) != str(self.room.id)):
             await self.send(text_data=json.dumps({
-                'message': "Wrong Username or Room ID",
+                'error': "Wrong Username or Room ID",
             }))
             await self.disconnect(403)
-
-        wishlist_products = await self.get_product_variants()
-        data = RoomWishlistProductSerializer(wishlist_products, many=True).data
-
+        data = await self.get_product_variants()
         action_type = text_data['action_type']
 
         if action_type == "add":
             self.product_id = int(text_data['product_id'])
             if await self.add_product(self.product_id):
-                wishlist_products = await self.get_product_variants()
-                data = RoomWishlistProductSerializer(wishlist_products, many=True).data
+                data = await self.get_product_variants()
+                await self.send(text_data=json.dumps({
+                    'success': "Product Added to Wishlist",
+                }))
             else:
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'send_to_websocket',
-                        'error': "Product Already Exists in Wishlist"
-                    }
-                )
+                await self.send(text_data=json.dumps({
+                    'error': "Product Already Exists in Wish List",
+                }))
 
         if action_type == "remove":
             self.product_id = int(text_data['product_id'])
             if await self.remove_product(self.product_id):
-                wishlist_products = await self.get_product_variants()
-                data = RoomWishlistProductSerializer(wishlist_products, many=True).data
+                data = await self.get_product_variants()
+                await self.send(text_data=json.dumps({
+                    'success': "Product Removed from Wish List",
+                }))
+            else:
+                await self.send(text_data=json.dumps({
+                    'error': "Product does not exists in Wish List",
+                }))
 
         if action_type == "vote":
-            self.wishlist_variant_id = int(text_data['wishlist_variant_id'])
+            self.wishlist_variant_id = int(text_data['wishlist_product_id'])
             if await self.vote_product_variant(self.wishlist_variant_id):
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'send_to_websocket',
-                        'success': "Your Vote has been registered"
-                    }
-                )
+                await self.send(text_data=json.dumps({
+                    'success': "Your Vote has been registered",
+                }))
             else:
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'send_to_websocket',
-                        'error': "You have already voteds"
-                    }
-                )
+                await self.send(text_data=json.dumps({
+                    'error': "You have already votes",
+                }))
 
         if action_type == "unvote":
-            self.wishlist_variant_id = int(text_data['wishlist_variant_id'])
+            self.wishlist_variant_id = int(text_data['wishlist_product_id'])
             if await self.unvote_product_variant(self.wishlist_variant_id):
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'send_to_websocket',
-                        'success': "Your Vote has been unregistered"
-                    }
-                )
+                await self.send(text_data=json.dumps({
+                    'success': "Your Vote has been unregistered"
+                }))
             else:
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'send_to_websocket',
-                        'error': "You haven't voted yet"
-                    }
-                )
+                await self.send(text_data=json.dumps({
+                    'error': "You haven't voted yet"
+                }))
 
         if action_type == "add_to_cart":
             self.wholesale_variant_id = int(text_data['wholesale_variant_id'])
             if await self.add_to_cart(self.wholesale_variant_id):
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'send_to_websocket',
-                        'success': "Product Added to Cart"
-                    }
-                )
+                await self.send(text_data=json.dumps({
+                    'success': "Product Added to Cart"
+                }))
             else:
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'send_to_websocket',
-                        'error': "Product Already in Cart"
-                    }
-                )
+                await self.send(text_data=json.dumps({
+                    'error': "Product Already in Cart"
+                }))
 
+        print(data)
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -146,10 +126,11 @@ class WishlistConsumer(AsyncJsonWebsocketConsumer):
         if wishlist_product.exists():
             return False
         else:
+            product = Product.objects.get(id=product_id)
             wishlist_product = RoomWishlistProduct.objects.create(
                 room=self.room,
                 user=self.user,
-                product__id=product_id
+                product=product
             )
         return wishlist_product
 
@@ -158,28 +139,32 @@ class WishlistConsumer(AsyncJsonWebsocketConsumer):
         wishlist_product = RoomWishlistProduct.objects.filter(room=self.room, product__id=product_id)
         if wishlist_product.exists():
             wishlist_product.delete()
-        return True
+            return True
+        return False
 
     @database_sync_to_async
     def get_product_variants(self):
         wishlist_products = RoomWishlistProduct.objects.filter(room=self.room)
-        return wishlist_products
+        serializer = RoomWishlistProductSerializer(wishlist_products, many=True)
+        return serializer.data
 
     @database_sync_to_async
-    def vote_product_variant(self, wishlist_variant_id):
-        product_vote, created = WishlistProductVote.objects.get_or_create(product__id=wishlist_variant_id, user=self.user)
+    def vote_product_variant(self, wishlist_product_id):
+        wishlist_product = RoomWishlistProduct.objects.get(id=wishlist_product_id)
+        product_vote, created = WishlistProductVote.objects.get_or_create(product=wishlist_product, user=self.user)
         if created:
-            return False
-        else:
             wishlist_product = product_vote.product
             wishlist_product.votes += 1
             wishlist_product.save()
-        return product_vote
+            return True
+        else:
+            return False
 
     @database_sync_to_async
-    def unvote_product_variant(self, wishlist_variant_id):
+    def unvote_product_variant(self, wishlist_product_id):
         try:
-            product_vote = WishlistProductVote.objects.get(product__id=wishlist_variant_id, user=self.user)
+            wishlist_product = RoomWishlistProduct.objects.get(id=wishlist_product_id)
+            product_vote = WishlistProductVote.objects.get(product=wishlist_product, user=self.user)
             wishlist_product = product_vote.product
             wishlist_product.votes -= 1
             wishlist_product.save()
@@ -192,7 +177,7 @@ class WishlistConsumer(AsyncJsonWebsocketConsumer):
     def add_to_cart(self, wholesale_variant_id):
         cart = RoomOrder.objects.filter(room=self.room, status = "draft")
         if cart.exists():
-            cart = cart[0]
+            cart = cart.first()
         else:
             cart = RoomOrder.objects.create(room=self.room, status = "draft")
         try:

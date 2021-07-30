@@ -46,7 +46,11 @@ def populate_smartphones():
 
     import pandas as pd
     df = pd.read_csv("phones.csv")
+    i = 0
     for row in df.iterrows():
+        i += 1
+        if i > 100:
+            break
         title = str(row[1][1])
         price = float(row[1][3].replace(",", ""))
         brand = row[1][4]

@@ -22,6 +22,7 @@ class Room(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     deleted_at = models.DateTimeField(blank=True, null=True)
     users = models.ManyToManyField("accounts.User", through="room.RoomUser")
+    private = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name

@@ -46,10 +46,11 @@ class TokenSerializer(serializers.ModelSerializer):
     store_id = serializers.SerializerMethodField(read_only=True)
     pickup_point_id = serializers.SerializerMethodField(read_only=True)
     username = serializers.SerializerMethodField(read_only=True)
+    profile_pic = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Token
-        fields = ('key', 'user', 'store_id', 'pickup_point_id', 'username')
+        fields = ('key', 'user', 'store_id', 'pickup_point_id', 'username', 'profile_pic')
 
     def get_pickup_point_id(self, obj):
         pickup_point = PickupPoint.objects.filter(user=obj.user)
@@ -68,6 +69,9 @@ class TokenSerializer(serializers.ModelSerializer):
             store = stores[0]
             return store.id
         return None
+
+    def get_profile_pic(self, obj):
+        return obj.user.profile_pic.url
 
 
 class UserListSerializer(serializers.ModelSerializer):

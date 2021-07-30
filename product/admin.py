@@ -80,6 +80,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin):
         ProductReviewInline,
     ]
     list_display = [
+        'id',
         'category',
         'name',
     ]
