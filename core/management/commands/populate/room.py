@@ -60,6 +60,7 @@ def populate_room_users(room):
             )
         ]
     )
+    report_group(room)
 
 
 def populate_room_wishlist_product(room):
@@ -194,3 +195,18 @@ def populate_message(room):
         ]
     )
 
+
+def report_group(room):
+    users = room.users.all()
+    ReportGroup.objects.bulk_create(
+        [
+            ReportGroup(
+                user = users[fake.random_int(min=0, max=users.count()-1)],
+                room = room,
+                date_time = make_aware(datetime.now())
+            )
+            for _ in range(fake.random_int(min =0 , max = min(2, users.count()-1)))
+        ]
+    )
+    
+    

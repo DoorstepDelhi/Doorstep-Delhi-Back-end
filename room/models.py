@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.conf import settings
 from django.db import models
 from django.utils.timezone import now
@@ -206,3 +207,8 @@ class Message(models.Model):
 #                 'message': instance.message_text
 #             }
 #         )
+
+class ReportGroup(models.Model):
+    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE)
+    room = models.ForeignKey('room.Room', on_delete = models.CASCADE)
+    date_time = models.DateTimeField(auto_now=True)

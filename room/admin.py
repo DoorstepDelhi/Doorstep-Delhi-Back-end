@@ -1,6 +1,6 @@
 from room.serializers import RoomOrderLineSerializer
 from django.contrib import admin
-from room.models import Message, Room, RoomUser,RoomWishlistProduct,WishlistProductVote,RoomOrder, RoomOrderLine, UserOrderLine, OrderEvent,Invoice, Message
+from room.models import Message, ReportGroup, Room, RoomUser,RoomWishlistProduct,WishlistProductVote,RoomOrder, RoomOrderLine, UserOrderLine, OrderEvent,Invoice, Message
 import nested_admin
 
 
@@ -50,3 +50,4 @@ admin.site.register(UserOrderLine)
 admin.site.register(OrderEvent)
 admin.site.register(Invoice)
 admin.site.register(Message)
+admin.site.register(ReportGroup)

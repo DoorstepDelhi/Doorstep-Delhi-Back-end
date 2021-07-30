@@ -2,7 +2,7 @@ from django.db import models
 from shop.serializers import OrderSerializer
 from typing import AsyncContextManager
 from rest_framework import serializers
-from room.models import Message, Room, RoomRecommendedProduct, RoomUser,RoomWishlistProduct,WishlistProductVote,RoomOrder, RoomOrderLine, UserOrderLine, OrderEvent,Invoice, Message
+from room.models import Message, ReportGroup, Room, RoomRecommendedProduct, RoomUser,RoomWishlistProduct,WishlistProductVote,RoomOrder, RoomOrderLine, UserOrderLine, OrderEvent,Invoice, Message
 from product.serializers2 import ProductListSerializer
 from accounts.serializers import AddressSerializer, UserSerializer, UserListSerializer
 from store.serializers import PickupPointSerializer, ShippingMethodSerializer
@@ -250,3 +250,12 @@ class MessageSerializer(serializers.ModelSerializer):
 
     def get_created_on(self, obj):
         return obj.created_on.strftime("%d %b %Y %H:%M:%S %Z")
+
+class ReportGroupSerializer(serializers.Serializer):
+    
+    user = serializers.HiddenField(
+    default=serializers.CurrentUserDefault()
+)
+    class Meta:
+        model = ReportGroup
+        fields = ['id','user','room','date_time']
