@@ -214,8 +214,8 @@ REST_FRAMEWORK = {
         'anon': '10000/day',
         'user': '100000/day'
     },
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 20
+    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    # 'PAGE_SIZE': 20
 }
 
 CSRF_COOKIE_NAME = "csrftoken"

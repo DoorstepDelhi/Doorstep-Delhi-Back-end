@@ -149,6 +149,7 @@ class ProductReviewSerializer(serializers.ModelSerializer):
         serializer = UserListSerializer(obj.user, many=False, context=self.context)
         return serializer.data
 
+
 class ReviewInputSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductReview
@@ -287,7 +288,10 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         return data
 
     def get_avg_rating(self, obj):
-        return round(obj.average_rating, 2)
+        if obj.average_rating:
+            return round(obj.average_rating, 2)
+        else:
+            return None
 
 
 class CollectionSerializer(serializers.ModelSerializer):

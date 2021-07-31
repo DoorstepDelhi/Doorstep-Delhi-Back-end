@@ -1,8 +1,8 @@
-from decimal import Decimal
 from datetime import date, datetime
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Sum
 from django.utils.timezone import now
 from django.core.validators import MinValueValidator
 from django.db.models.signals import post_save
@@ -38,20 +38,13 @@ class Order(models.Model):
         related_name="orders",
         on_delete=models.SET_NULL,
     )
-    shipping_price = models.DecimalField(
-        max_digits=settings.DEFAULT_MAX_DIGITS,
-        decimal_places=settings.DEFAULT_DECIMAL_PLACES,
-        default=0,
-        editable=False,
-    )
-    total_net_amount = models.DecimalField(
-        max_digits=settings.DEFAULT_MAX_DIGITS,
-        decimal_places=settings.DEFAULT_DECIMAL_PLACES,
+    shipping_price = models.PositiveSmallIntegerField(
         default=0,
     )
-    undiscounted_total_net_amount = models.DecimalField(
-        max_digits=settings.DEFAULT_MAX_DIGITS,
-        decimal_places=settings.DEFAULT_DECIMAL_PLACES,
+    total_net_amount = models.PositiveBigIntegerField(
+        default=0,
+    )
+    undiscounted_total_net_amount = models.PositiveBigIntegerField(
         default=0,
     )
     voucher = models.ForeignKey(
@@ -74,24 +67,41 @@ class OrderLine(models.Model):
     order = models.ForeignKey(
         Order, related_name="lines", editable=False, on_delete=models.CASCADE, null=True
     )
-    variant = models.ForeignKey(
-        "product.ProductVariant",
+    product = models.ForeignKey(
+        "product.Product",
         related_name="order_lines",
         on_delete=models.SET_NULL,
         blank=True,
-        null=True,
+        null=True
     )
     quantity = models.IntegerField(validators=[MinValueValidator(1)])
     quantity_fulfilled = models.IntegerField(
         validators=[MinValueValidator(0)], default=0
     )
 
-    def increment_quantity_by_one(self,order:order,variant:variant):
-        orderline, _is_created = self.items.get(id=id, order=order)
-        current_quantity = orderline.quantity
-        orderline.update(quantity=current_quantity+1)
-        orderline.save()
-        return orderline
+    class Meta:
+        unique_together = ("order", "product")
+
+    @property
+    def product_quantity(self):
+        product_quantity = OrderLineVariant.objects.filter(order_line=self).aggregate(product_quantity=Sum('quantity'))['product_quantity']
+        return product_quantity
+
+
+class OrderLineVariant(models.Model):
+    order_line = models.ForeignKey("shop.OrderLine", on_delete=models.CASCADE)
+    quantity = models.IntegerField(validators=[MinValueValidator(1)])
+    variants = models.ManyToManyField("product.ProductVariant")
+
+    # class Meta:
+        # unique_together = ("order_line")
+
+    # def increment_quantity_by_one(self,order,variant:variant):
+    #     orderline, _is_created = self.items.get(id=id, order=order)
+    #     current_quantity = orderline.quantity
+    #     orderline.update(quantity=current_quantity+1)
+    #     orderline.save()
+    #     return orderline
 
 
 class OrderEvent(models.Model):

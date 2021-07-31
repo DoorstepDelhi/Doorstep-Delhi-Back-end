@@ -12,7 +12,6 @@ from room.models import *
 from shop.choices import order_status_choices, order_event_type_choices
 from store.models import ShippingMethod
 
-
 fake = Faker()
 Faker.seed(999)
 
@@ -55,9 +54,9 @@ def populate_room_users(room):
                 joined_at=fake.date_time_this_month()
             )
             for i in random.sample(
-                range(users.count()),
-                fake.random_int(min=2, max=min(users.count(), 50))
-            )
+            range(users.count()),
+            fake.random_int(min=2, max=min(users.count(), 50))
+        )
         ]
     )
     report_group(room)
@@ -116,28 +115,43 @@ def populate_room_order(room):
 
 def populate_room_order_line(room, room_order):
     users = room.users.all()
-    variants = ProductVariant.objects.all()
+    products = Product.objects.all()
 
-    for j in random.sample(range(variants.count()), fake.random_int(min=min(variants.count(), 1), max=min(variants.count(), 10))):
+    for j in random.sample(range(products.count()),
+                           fake.random_int(min=min(products.count(), 1), max=min(products.count(), 10))):
         room_order_line = RoomOrderLine.objects.create(
             order=room_order,
             user=users[random.randint(0, users.count() - 1)],
-            variant=variants[j],
+            product=products[j],
             status=room_order.status,
             created_at=room_order.created
         )
-        populate_user_order_line(room, room_order_line)
+        populate_order_line_variant(room_order_line)
         populate_invoice(room_order)
 
 
-def populate_user_order_line(room, room_order_line):
-    users = room.users.all()
+def populate_order_line_variant(order_line):
+    variants = ProductVariant.objects.filter(product=order_line.product)
+    for _ in range(fake.random_int(min=1, max=5)):
+        order_line_variants = RoomOrderLineVariant.objects.create(
+            order_line=order_line,
+        )
+        for i in random.sample(
+                range(variants.count()),
+                fake.random_int(min=1, max=min(variants.count(), 4))
+        ):
+            order_line_variants.variants.add(variants[i])
+        populate_user_order_line(order_line_variants)
+
+
+def populate_user_order_line(order_line_variants):
+    users = order_line_variants.order_line.order.room.users.all()
 
     UserOrderLine.objects.bulk_create(
         [
             UserOrderLine(
                 user=users[i],
-                product=room_order_line,
+                product=order_line_variants,
                 quantity=fake.random_int(max=100),
                 quantity_fulfilled=fake.random_int(min=0, max=50),
                 # quantity fulfilled might be greater than quantity of product
@@ -145,7 +159,8 @@ def populate_user_order_line(room, room_order_line):
                 customization=fake.text(max_nb_chars=200),
                 file=fake.file_name()
             )
-            for i in random.sample(range(0, users.count()), random.randint(0, users.count()))
+            for i in random.sample(range(users.count()),
+                                   fake.random_int(min=min(users.count(), 1), max=min(users.count(), 10)))
         ]
     )
 
@@ -186,8 +201,8 @@ def populate_message(room):
             Message(
                 file_field=fake.file_name(),
                 message_text=fake.text(max_nb_chars=75),
-                product = products[random.randint(0, products.count() - 1)],
-                user=users[fake.random_int(min=0, max=users.count()-1)],
+                product=products[random.randint(0, products.count() - 1)],
+                user=users[fake.random_int(min=0, max=users.count() - 1)],
                 created_on=make_aware(datetime.now()),
                 room=room
             )
@@ -201,12 +216,10 @@ def report_group(room):
     ReportGroup.objects.bulk_create(
         [
             ReportGroup(
-                user = users[fake.random_int(min=0, max=users.count()-1)],
-                room = room,
-                date_time = make_aware(datetime.now())
+                user=users[fake.random_int(min=0, max=users.count() - 1)],
+                room=room,
+                date_time=make_aware(datetime.now())
             )
-            for _ in range(fake.random_int(min =0 , max = min(2, users.count()-1)))
+            for _ in range(fake.random_int(min=0, max=min(2, users.count() - 1)))
         ]
     )
-    
-    

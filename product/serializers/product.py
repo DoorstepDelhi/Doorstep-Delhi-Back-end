@@ -41,16 +41,17 @@ class ProductListSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     min_qty = serializers.SerializerMethodField()
     min_price = serializers.SerializerMethodField()
+    avg_rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = [
             "id",
             "name",
-            "average_rating",
             "image",
             "min_qty",
             "min_price",
+            "avg_rating",
         ]
 
     def get_min_price(self, obj):
@@ -66,3 +67,9 @@ class ProductListSerializer(serializers.ModelSerializer):
             serializer=ProductImageSerializer(image, context=self.context)
             return serializer.data
         return None
+
+    def get_avg_rating(self, obj):
+        if obj.average_rating:
+            return round(obj.average_rating, 2)
+        else:
+            return None

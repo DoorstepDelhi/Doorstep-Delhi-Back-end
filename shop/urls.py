@@ -12,9 +12,9 @@ router.register('event', OrderEventViewSet, basename='order-event')
 router.register('giftcard', GiftCardViewset, basename='giftcard')
 router.register('voucher', VoucherViewset, basename='voucher')
 router.register('sales', SaleViewset, basename='sale')
-router.register('order', OrderViewSet, basename='order')
-router.register('orderline',OrderLineViewSet, basename = "order-line")
-router.register('order_summary',OrderSummaryViewSet, basename = "order_summary")
+router.register('orders', OrderViewSet, basename='order')
+router.register('orderline', OrderLineViewSet, basename="order-line")
+router.register('order_summary', OrderSummaryViewSet, basename="order_summary")
 
 urlpatterns = [
     path('', include(router.urls)),

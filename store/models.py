@@ -15,9 +15,8 @@ class Store(models.Model):
     website = models.URLField(null= True)
     facebook_link = models.URLField(null= True)
     instagram_link = models.URLField(null= True)
-    
 
-    def __str__(self):  #udit
+    def __str__(self):
         return self.name
 
 

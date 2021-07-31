@@ -32,7 +32,7 @@ class Website(models.Model):
 
     def __str__(self):
         if self.name:
-            return self.name
+            return f'{self.name} ({self.url})'
         return self.url
 
 

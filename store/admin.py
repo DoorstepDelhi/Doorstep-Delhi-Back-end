@@ -1,7 +1,7 @@
 from django.contrib import admin
 import nested_admin
 
-from .models import Store, ShippingZone, ShippingMethod, BankAccount
+from .models import Store, ShippingZone, ShippingMethod, BankAccount, PickupPoint
 
 
 class StoreAdmin(nested_admin.NestedModelAdmin):
@@ -26,3 +26,4 @@ class BankAccountAdmin(admin.ModelAdmin):
 admin.site.register(Store, StoreAdmin)
 admin.site.register(ShippingZone, ShippingZoneAdmin)
 admin.site.register(BankAccount, BankAccountAdmin)
+admin.site.register(PickupPoint)

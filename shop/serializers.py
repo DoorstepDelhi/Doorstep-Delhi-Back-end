@@ -3,11 +3,13 @@ from rest_framework.fields import CurrentUserDefault
 from datetime import datetime
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
-from django.db.models import Q
+from django.db.models import Q, Sum
 
-from .models import Order, OrderLine, OrderEvent, Invoice, GiftCard, Voucher, Sale
+from product.serializers2 import ProductListSerializer
+from .models import Order, OrderLine, OrderLineVariant, OrderEvent, Invoice, GiftCard, Voucher, Sale
 from accounts.models import Address
 from accounts.serializers import AddressSerializer, UserSerializer
+
 
 class GiftCardSerializers(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault)
@@ -26,10 +28,72 @@ class GiftCardSerializers(serializers.ModelSerializer):
             'initial_balance_amount',
             'current_balance_amount',
         ]
-        
+
+
+class CartSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault)
+    products = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            'id',
+            'user',
+            'total_net_amount',
+            'undiscounted_total_net_amount',
+            'voucher',
+            'gift_cards',
+            'products',
+        ]
+
+    def get_products(self, obj):
+        products = OrderLine.objects.filter(order=obj, quantity__gt=0)
+        serializer = OrderLineSerializer(products, many=True, context=self.context)
+        return serializer.data
+
+
+class OrderLineSerializer(serializers.ModelSerializer):
+    product = ProductListSerializer(read_only=True)
+    quantity = serializers.SerializerMethodField(read_only=True)
+    variants = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = OrderLine
+        fields = [
+            'id',
+            'product',
+            'quantity',
+            'variants',
+        ]
+
+    def get_quantity(self, obj):
+        qty = obj.product_quantity
+        return qty
+
+    def get_variants(self, obj):
+        variants = OrderLineVariant.objects.filter(order_line=obj, quantity__gt=0)
+        serializer = OrderLineVariantSerializer(variants, many=True, context=self.context)
+        return serializer.data
+
+
+class OrderLineVariantSerializer(serializers.ModelSerializer):
+    variants = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = OrderLineVariant
+        fields = [
+            'id',
+            'variants',
+            'quantity',
+        ]
+
+    def get_variants(self, obj):
+        variants = obj.variants.all().values_list("name", flat=True)
+        return variants
+
 
 class OrderSerializer(serializers.ModelSerializer):
-    # user = serializers.HiddenField(default=serializers.CurrentUserDefault)
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault)
     created = serializers.DateTimeField(read_only=True)
     # gift_cards = serializers.SerializerMethodField()
 
@@ -48,7 +112,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'total_net_amount',
             'undiscounted_total_net_amount',
             'voucher',
-            # 'gift_cards',
+            'gift_cards',
             'display_gross_prices',
             'customer_note',
         ]
@@ -79,16 +143,6 @@ class OrderListSerializers(serializers.ModelSerializer):
         read_only_fields = ('id', 'tracking_client_id',)
 
 
-class OrderLineSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OrderLine
-        fields = [
-            'id',
-            'order',
-            'variant',
-            'quantity',
-            'quantity_fulfilled',
-        ]
 
 
 class OrderEventSerializer(serializers.ModelSerializer):

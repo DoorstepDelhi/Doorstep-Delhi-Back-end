@@ -19,6 +19,7 @@ from django.core.cache import cache
 from django.conf import settings
 from store.permissions import IsStoreOwner
 from rest_framework.pagination import LimitOffsetPagination
+from django.db.models import Count
 
 from product.models import (
     Category,
@@ -56,7 +57,7 @@ from accounts.models import Address
 from accounts.serializers import UserListSerializer
 from room.models import RoomWishlistProduct
 from shop.serializers import OrderLineSerializer, OrderSerializer
-from shop.models import Order, OrderLine
+from shop.models import Order, OrderLine, OrderLineVariant
 
 # Serializers
 from product.serializers.category import (
@@ -188,16 +189,15 @@ class ProductViewSet(viewsets.ModelViewSet):
         return products
 
     def list(self, request, *args, **kwargs):
-        products = self.get_queryset()
-        page = self.paginate_queryset(products)
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
         serializer_context = {"request": request}
-
         if page is not None:
             serializer = ProductListSerializer(page, many=True, context=serializer_context)
             return self.get_paginated_response(serializer.data)
 
-        serializer = ProductListSerializer(products, many=True, context=serializer_context)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = ProductListSerializer(queryset, many=True, context=serializer_context)
+        return Response(serializer.data)
 
     @action(detail=True, methods=["get"], permission_classes=[AllowAny])
     def reviews(self, request, pk):
@@ -250,6 +250,46 @@ class ProductViewSet(viewsets.ModelViewSet):
         wishlist, created = Wishlist.objects.get_or_create(user=request.user)
         wishlist.remove_product(product)
         return Response({"status": "success"}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated], name="Add to Cart")
+    def add_to_cart(self, request, pk):
+        product = self.get_object()
+        user = request.user
+        variants = request.data("variants", None)
+        if not variants:
+            return Response({"error": "Please Select Variants"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            variants = list(set(map(int, variants.strip().strip(",").split(","))))
+        orders = Order.objects.filter(
+            user=user,
+            status="draft",
+        )
+        if orders.exists():
+            cart = orders.first()
+        else:
+            cart = Order.objects.create(
+                user=user,
+                status="draft",
+            )
+            if user.default_billing_address:
+                cart.billing_address = user.default_billing_address
+            if user.default_shipping_address:
+                cart.shipping_address = user.default_shipping_address
+            cart.save()
+        order_line = OrderLine.objects.get_or_create(order=cart, product=product)
+        order_line_variants = OrderLineVariant.objects.annotate(count=Count('variants')).filter(order_line=order_line, count=len(variants))
+        for pk in variants:
+            order_line_variants = order_line_variants.filter(variants__variant_id=pk)
+        if order_line_variants.exists():
+            order_line_variant = order_line_variants.first()
+        else:
+            order_line_variant = OrderLineVariant.objects.create(order_line=order_line)
+            for pk in variants:
+                order_line_variant.variants.add(ProductVariant.objects.get(id=pk))
+        order_line_variant.quantity += 1
+        order_line_variant.save()
+        return Response({"status": "Item added to Cart Successfully"})
+
 
 
 class ProductImageViewSet(viewsets.ModelViewSet):

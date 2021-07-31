@@ -13,6 +13,7 @@ from shop.choices import order_status_choices, order_event_type_choices, voucher
 from store.models import ShippingMethod, PickupPoint
 from shop.models import *
 
+
 fake = Faker()
 Faker.seed(999)
 
@@ -74,19 +75,32 @@ def populate_gift_cards(order):
 
 
 def populate_order_line(order):
-    variants = ProductVariant.objects.all()
-    OrderLine.objects.bulk_create(
-        [
-            OrderLine(
-                order=order,
-                variant=variants[random.randint(0, variants.count() - 1)],
-                quantity=fake.random_int(max=100),
-                quantity_fulfilled=fake.random_int(min=0, max=50),
+    products = Product.objects.all()
+    for i in random.sample(
+            range(products.count()),
+            fake.random_int(min=1, max=min(products.count(), 10))
+    ):
+        order_line = OrderLine.objects.create(
+            order=order,
+            product=products[i],
+            quantity=fake.random_int(max=100),
+            quantity_fulfilled=fake.random_int(min=0, max=50),
+        )
+        populate_order_line_variants(order_line)
 
-            )
 
-        ]
-    )
+def populate_order_line_variants(order_line):
+    variants = ProductVariant.objects.filter(product=order_line.product)
+    for _ in range(fake.random_int(min=1, max=5)):
+        order_line_variants = OrderLineVariant.objects.create(
+            order_line=order_line,
+            quantity=fake.random_int(min=1, max=100)
+        )
+        for i in random.sample(
+            range(variants.count()),
+            fake.random_int(min=1, max=min(variants.count(), 4))
+        ):
+            order_line_variants.variants.add(variants[i])
 
 
 def populate_order_event(order):

@@ -9,10 +9,10 @@ from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated, I
 from django.db.models import Q
 from datetime import date, datetime
 
-from .serializers import (OrderSerializer, OrderLineSerializer, OrderEventSerializer,
+from .serializers import (CartSerializer, OrderSerializer, OrderLineSerializer, OrderEventSerializer,
                           InvoiceSerializers, GiftCardSerializers, OrderSummarySerializer, VoucherSerializers,
                           SaleSerializers, CouponInputSerializers)
-from .models import (Order, OrderLine, OrderEvent, Invoice, GiftCard, Voucher, Sale)
+from .models import (Order, OrderLine, OrderLineVariant, OrderEvent, Invoice, GiftCard, Voucher, Sale)
 from accounts.models import Address
 from payment.models import Payment, Transaction
 from .permissions import IsAdminOrReadOnly
@@ -30,8 +30,6 @@ from xhtml2pdf import pisa
 from .models import Order
 
 
-
-
 class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     permission_classes = [IsOwnerReadOnlyOrAdmin]
@@ -41,6 +39,39 @@ class OrderViewSet(viewsets.ModelViewSet):
         if not self.request.user.is_superuser:
             orders = orders.filter(user = self.request.user)
         return orders
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated], name="User Cart")
+    def cart(self, request):
+        cart = Order.objects.filter(user=self.request.user, status='draft')
+        if cart.exists():
+            cart = cart[0]
+        else:
+            cart = Order.objects.create(user=self.request.user, status="draft")
+        serializer = CartSerializer(cart, many=False)
+        return Response(serializer.data, status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated], name="Add Product Variant Quantity")
+    def add_quantity(self, request):
+        variant_id = request.data.get('variant_id', None)
+        if variant_id:
+            cart_product_variant = get_object_or_404(OrderLineVariant, id=variant_id)
+            cart_product_variant.quantity += 1
+            cart_product_variant.save()
+            return Response({"success": "Quantity Updated Successfully"})
+        return Response({"error": "Cart Product Variant ID Missing"}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated], name="Add Product Variant Quantity")
+    def remove_quantity(self, request):
+        variant_id = request.data.get('variant_id', None)
+        if variant_id:
+            cart_product_variant = get_object_or_404(OrderLineVariant, id=variant_id)
+            if cart_product_variant.quantity > 1:
+                cart_product_variant.quantity -= 1
+                cart_product_variant.save()
+            else:
+                cart_product_variant.delete()
+            return Response({"success": "Quantity Updated Successfully"})
+        return Response({"error": "Cart Product Variant ID Missing"}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['get'])
     def invoice(self, request, pk=None):
@@ -163,15 +194,6 @@ class OrderViewSet(viewsets.ModelViewSet):
     def payment_status(self, request, pk=None):
         pass
 
-    @action(detail=False, methods=['get'], permission_classes=[IsOwnerReadOnlyOrAdmin])
-    def cart(self, request):
-        cart = Order.objects.filter(user=self.request.user, status='draft')
-        if cart.exists():
-            cart = cart[0]
-        else:
-            cart = Order.objects.create(user=self.request.user, status="draft")
-        serializer = OrderSerializer(cart, many=False)
-        return serializer.data
 
 
 class OrderEventViewSet(viewsets.ModelViewSet):

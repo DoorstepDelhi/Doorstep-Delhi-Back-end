@@ -38,6 +38,8 @@ notification_lang_choices = (
     ("en", "en"),
     ("na", "na")
 )
+
+
 class UserPreference(models.Model):
     user = models.OneToOneField("accounts.User", on_delete=models.CASCADE)
     notification_lang = models.CharField(max_length=2, choices=notification_lang_choices, default="en")

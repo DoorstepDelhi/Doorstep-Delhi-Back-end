@@ -1,6 +1,7 @@
 from datetime import datetime
 from django.conf import settings
 from django.db import models
+from django.db.models import Sum
 from django.utils.timezone import now
 from django.core.validators import MinValueValidator
 from django.db.models.signals import post_save
@@ -105,20 +106,13 @@ class RoomOrder(models.Model):
         related_name="shipping_method",
         on_delete=models.SET_NULL,
     )
-    shipping_price = models.DecimalField(
-        max_digits=settings.DEFAULT_MAX_DIGITS,
-        decimal_places=settings.DEFAULT_DECIMAL_PLACES,
-        default=0,
-        editable=False,
-    )
-    total_net_amount = models.DecimalField(
-        max_digits=settings.DEFAULT_MAX_DIGITS,
-        decimal_places=settings.DEFAULT_DECIMAL_PLACES,
+    shipping_price = models.PositiveSmallIntegerField(
         default=0,
     )
-    undiscounted_total_net_amount = models.DecimalField(
-        max_digits=settings.DEFAULT_MAX_DIGITS,
-        decimal_places=settings.DEFAULT_DECIMAL_PLACES,
+    total_net_amount = models.PositiveBigIntegerField(
+        default=0,
+    )
+    undiscounted_total_net_amount = models.PositiveBigIntegerField(
         default=0,
     )
 
@@ -128,9 +122,9 @@ class RoomOrderLine(models.Model):
         'room.RoomOrder', related_name="lines", editable=False, on_delete=models.CASCADE, null=True
     )
     user = models.ForeignKey("accounts.User", on_delete=models.SET_NULL, null=True)
-    variant = models.ForeignKey(
-        "product.ProductVariant",
-        related_name="order_line_variants",
+    product = models.ForeignKey(
+        "product.Product",
+        related_name="order_line_products",
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
@@ -140,12 +134,42 @@ class RoomOrderLine(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('order', "variant")
+        unique_together = ('order', "product")
+
+    @property
+    def group_quantity(self):
+        quantity = RoomOrderLineVariant.objects.filter(order_line=self).aggregate(quantity=Sum('group_quantity'))['quantity']
+        return quantity
+
+    def user_quantity(self, user):
+        variants = RoomOrderLineVariant.objects.filter(order_line=self)
+        quantity = 0
+        for variant in variants:
+            quantity += variant.user_quantity(user)
+        return quantity
+
+
+class RoomOrderLineVariant(models.Model):
+    order_line = models.ForeignKey(
+        'room.RoomOrderLine', related_name="line_variants", editable=False, on_delete=models.CASCADE, null=True
+    )
+    variants = models.ManyToManyField(
+        "product.ProductVariant",
+    )
+
+    @property
+    def group_quantity(self):
+        quantity = UserOrderLine.objects.filter(product=self).aggregate(quantity=Sum('quantity'))['quantity']
+        return quantity
+
+    def user_quantity(self, user):
+        user_order_line = UserOrderLine.objects.get(user=user, product=self)
+        return user_order_line.quantity
 
 
 class UserOrderLine(models.Model):
     user = models.ForeignKey('accounts.User', null=True, on_delete=models.SET_NULL)
-    product = models.ForeignKey('room.RoomOrderLine', related_name='users_quantity', on_delete=models.CASCADE, null=True)
+    product = models.ForeignKey('room.RoomOrderLineVariant', related_name='users_quantity', on_delete=models.CASCADE, null=True)
     quantity = models.IntegerField(validators=[MinValueValidator(1)])
     quantity_fulfilled = models.IntegerField(
         validators=[MinValueValidator(0)], default=0
@@ -153,6 +177,9 @@ class UserOrderLine(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     customization = models.TextField(null=True, blank=True)
     file = models.FileField(null=True, blank=True, upload_to="group_orders")
+
+    class Meta:
+        unique_together = ('user', 'product')
 
 
 class OrderEvent(models.Model):

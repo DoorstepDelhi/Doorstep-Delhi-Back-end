@@ -2,7 +2,20 @@ from django.db import models
 from shop.serializers import OrderSerializer
 from typing import AsyncContextManager
 from rest_framework import serializers
-from room.models import Message, ReportGroup, Room, RoomRecommendedProduct, RoomUser,RoomWishlistProduct,WishlistProductVote,RoomOrder, RoomOrderLine, UserOrderLine, OrderEvent,Invoice, Message
+from room.models import (
+    ReportGroup,
+    Room,
+    RoomRecommendedProduct,
+    RoomUser,
+    RoomWishlistProduct,
+    RoomOrder,
+    RoomOrderLine,
+    RoomOrderLineVariant,
+    UserOrderLine,
+    OrderEvent,
+    Invoice,
+    Message
+)
 from product.serializers2 import ProductListSerializer
 from accounts.serializers import AddressSerializer, UserSerializer, UserListSerializer
 from store.serializers import PickupPointSerializer, ShippingMethodSerializer
@@ -21,19 +34,6 @@ class RoomSerializer(serializers.ModelSerializer):
             "image",
             "created_at",
             "deleted_at",
-        ]
-
-
-class RoomRecommendationsSerializer(serializers.ModelSerializer):
-    product = ProductListSerializer()
-
-    class Meta:
-        model = RoomRecommendedProduct
-        fields = [
-            "id",
-            "product",
-            "variants",
-            "priority",
         ]
 
 
@@ -87,6 +87,19 @@ class RoomLastMessageSerializer(serializers.ModelSerializer):
         return True
 
 
+class RoomRecommendationsSerializer(serializers.ModelSerializer):
+    product = ProductListSerializer()
+
+    class Meta:
+        model = RoomRecommendedProduct
+        fields = [
+            "id",
+            "product",
+            "variants",
+            "priority",
+        ]
+
+
 class RoomUserSerializer(serializers.ModelSerializer):
     # user = serializers.HiddenField(
     #     default=serializers.CurrentUserDefault()
@@ -122,19 +135,81 @@ class RoomWishlistProductSerializer(serializers.ModelSerializer):
         ]
 
 
-class WishlistProductVoteSerializer(serializers.ModelSerializer):
-    product = RoomWishlistProductSerializer()
-    user = serializers.HiddenField(
-        default=serializers.CurrentUserDefault()
-    )
+class RoomCartSerializer(serializers.ModelSerializer):
+    products = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
-        model = WishlistProductVote
+        model = RoomOrder
         fields = [
-            "id",
-            "product",
-            "user"
+            'id',
+            'room'
+            'total_net_amount',
+            'undiscounted_total_net_amount',
+            'voucher',
+            'gift_cards',
+            'products',
         ]
+
+    def get_products(self, obj):
+        products = RoomOrderLine.objects.filter(order=obj, quantity__gt=0)
+        serializer = RoomOrderLineSerializer(products, many=True, context=self.context)
+        return serializer.data
+
+
+class RoomOrderLineSerializer(serializers.ModelSerializer):
+    product = ProductListSerializer(read_only=True)
+    user_quantity = serializers.SerializerMethodField(read_only=True)
+    variants = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = RoomOrderLine
+        fields = [
+            'id',
+            'product',
+            'user_quantity',
+            'variants',
+        ]
+
+    def get_group_quantity(self, obj):
+        qty = obj.roup_quantity
+        return qty
+
+    def get_user_quantity(self, obj):
+        request = self.context.get('request', None)
+        if request:
+            user = request.user
+            qty = obj.user_quantity(user)
+            return qty
+        return None
+
+    def get_variants(self, obj):
+        variants = RoomOrderLineVariant.objects.filter(order_line=obj, quantity__gt=0)
+        serializer = RoomOrderLineVariantSerializer(variants, many=True, context=self.context)
+        return serializer.data
+
+
+class RoomOrderLineVariantSerializer(serializers.ModelSerializer):
+    variants = serializers.SerializerMethodField(read_only=True)
+    quantity = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = RoomOrderLineVariant
+        fields = [
+            'id',
+            'variants',
+            'quantity',
+        ]
+
+    def get_variants(self, obj):
+        variants = obj.variants.all().values_list("name", flat=True)
+        return variants
+
+    def get_quantity(self, obj):
+        request = self.context.get('request', None)
+        if request:
+            user = request.user
+            return obj.user_quantity(user)
+        return None
 
 
 class RoomOrderSerializer(serializers.ModelSerializer):
@@ -158,20 +233,6 @@ class RoomOrderSerializer(serializers.ModelSerializer):
             "shipping_price",
             "total_net_amount",
             "undiscounted_total_net_amount"
-        ]
-
-
-class RoomOrderLineSerializer(serializers.ModelSerializer):
-    order = OrderSerializer()
-    created_at = serializers.ReadOnlyField()
-
-    class Meta:
-        model = RoomOrderLine
-        fields = [
-            "id",
-            "order",
-            "variant",
-            "created_at"
         ]
 
 
