@@ -36,3 +36,4 @@ xhtml2pdf
 python-magic
 libmagic
 pandas
+sentry-sdk

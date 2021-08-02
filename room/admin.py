@@ -40,6 +40,34 @@ class RoomAdmin(nested_admin.NestedModelAdmin):
                     ]
 
 
+class RoomMessageAdmin(nested_admin.NestedModelAdmin):
+    list_display = [
+                    'id',
+                    'room',
+                    'user',
+                    'created_on',
+                    'message_text',
+                    ]
+    list_editable = [
+                    ]
+    list_display_links = [
+                    'id',
+                    'room',
+                    'user',
+                    'created_on',
+                    'message_text',
+                    ]
+    list_filter = [
+                    'room',
+                    'user',
+                    ]
+    search_fields = [
+                    'room',
+                    'user',
+                    'message_text',
+                    ]
+
+
 admin.site.register(Room, RoomAdmin)
 admin.site.register(RoomUser)
 admin.site.register(RoomWishlistProduct)
@@ -49,5 +77,5 @@ admin.site.register(RoomOrderLine)
 admin.site.register(UserOrderLine)
 admin.site.register(OrderEvent)
 admin.site.register(Invoice)
-admin.site.register(Message)
+admin.site.register(Message, RoomMessageAdmin)
 admin.site.register(ReportGroup)

@@ -14,7 +14,8 @@ from decouple import config
 import django_heroku
 import os
 from pathlib import Path
-
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -68,8 +69,10 @@ INSTALLED_APPS = [
     "shop",
     "wishlist",
     "payment",
-    'core',
+    "core",
     "room",
+    "social",
+    "chat",
 ]
 
 MIDDLEWARE = [
@@ -108,7 +111,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [("redis", 6379)],
         },
     },
 }
@@ -311,3 +314,17 @@ PAYTM_SECRET_KEY = config("PAYTM_SECRET_KEY")
 PAYTM_WEBSITE = config("PAYTM_WEBSITE")
 PAYTM_CHANNEL_ID = config("PAYTM_CHANNEL_ID")
 PAYTM_INDUSTRY_TYPE_ID = config("PAYTM_INDUSTRY_TYPE_ID")
+
+sentry_sdk.init(
+    dsn="https://a18c17478a914ba18111ce9556c3d547@o939104.ingest.sentry.io/5888963",
+    integrations=[DjangoIntegration()],
+
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    # We recommend adjusting this value in production.
+    traces_sample_rate=1.0,
+
+    # If you wish to associate users to errors (assuming you are using
+    # django.contrib.auth) you may enable sending PII data.
+    send_default_pii=True
+)

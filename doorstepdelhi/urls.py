@@ -56,6 +56,7 @@ urlpatterns = [
     path('rooms/', include('room.urls')),
     path('payment/',include('payment.urls')),
     path('core/', include('core.urls')),
+    path('social/', include('social.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
