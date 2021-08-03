@@ -11,7 +11,6 @@ from accounts.models import User
 class WebsiteConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.user = self.scope["user"]
-        print("--------User----------", self.user)
         # self.room_group_name = 'chat_%s' % self.room_name
         # await self.channel_layer.group_add(
         #     self.room_group_name,
@@ -48,7 +47,7 @@ def get_website_detail(user):
     #     user=request.user,
     #     created_at__lt=datetime.datetime.now() - datetime.timedelta(days=1),
     # ).values_list("website")
-    user = User.objects.get(username="admin")
+    # user = User.objects.get(username="admin")
     websites = Website.objects.exclude(user=user).exclude(
         website_hits__user=user, website_hits__created_at__gt=datetime.datetime.now() - datetime.timedelta(days=1)
     )
@@ -61,7 +60,7 @@ def get_website_detail(user):
 
 @database_sync_to_async
 def save_website_hit(user, website_id, type):
-    user = User.objects.get(username="admin")
+    # user = User.objects.get(username="admin")
     try:
         website = Website.objects.get(id=website_id)
         website_hit = WebsiteHit.objects.create(

@@ -8,20 +8,21 @@ https://docs.djangoproject.com/en/3.1/howto/deployment/asgi/
 """
 
 import os
-from channels.auth import AuthMiddlewareStack
+# from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter, get_default_application
 from channels.security.websocket import AllowedHostsOriginValidator
 
 import django
-from django.core.asgi import get_asgi_application
 
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "doorstepdelhi.settings")
+django.setup()
+
+from django.core.asgi import get_asgi_application
 import room.routing
 import core.routing
 import webtraffic.routing
 from doorstepdelhi.middleware import TokenAuthMiddlewareStack
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "doorstepdelhi.settings")
-django.setup()
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
