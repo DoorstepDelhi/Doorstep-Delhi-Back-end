@@ -146,23 +146,20 @@ def populate_order_line_variant(order_line):
 
 def populate_user_order_line(order_line_variants):
     users = order_line_variants.order_line.order.room.users.all()
-
-    UserOrderLine.objects.bulk_create(
-        [
-            UserOrderLine(
-                user=users[i],
-                product=order_line_variants,
-                quantity=fake.random_int(max=100),
-                quantity_fulfilled=fake.random_int(min=0, max=50),
+    for i in random.sample(range(users.count()),
+                           fake.random_int(min=min(users.count(), 1), max=min(users.count(), 10))):
+        UserOrderLine.objects.get_or_create(
+            user=users[i],
+            product=order_line_variants,
+            defaults={
+                "quantity": fake.random_int(max=100),
+                "quantity_fulfilled": fake.random_int(min=0, max=50),
                 # quantity fulfilled might be greater than quantity of product
-                updated_at=make_aware(datetime.now()),
-                customization=fake.text(max_nb_chars=200),
-                file=fake.file_name()
-            )
-            for i in random.sample(range(users.count()),
-                                   fake.random_int(min=min(users.count(), 1), max=min(users.count(), 10)))
-        ]
-    )
+                "updated_at": make_aware(datetime.now()),
+                "customization": fake.text(max_nb_chars=200),
+                "file": fake.file_name()
+            }
+        )
 
 
 # def populate_order_event(room):
