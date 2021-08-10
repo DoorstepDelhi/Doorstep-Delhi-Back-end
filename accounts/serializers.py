@@ -29,7 +29,6 @@ class CustomRegisterSerializer(RegisterSerializer):
             'password2': self.validated_data.get('password2', ''),
             'email': self.validated_data.get('email', ''),
             'mobile': self.validated_data.get('referral_code', ''),
-
         }
 
     def save(self, request):
@@ -73,7 +72,9 @@ class TokenSerializer(serializers.ModelSerializer):
         return None
 
     def get_profile_pic(self, obj):
-        return obj.user.profile_pic.url
+        if obj.user.profile_pic:
+            return obj.user.profile_pic.url
+        return None
 
     def get_first_name(self, obj):
         return obj.user.first_name
