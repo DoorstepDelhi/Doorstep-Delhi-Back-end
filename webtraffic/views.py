@@ -53,7 +53,26 @@ class WebsiteAPIViewSet(viewsets.ModelViewSet):
 
         return websites
 
-    @action(detail=False, methods=["get"], permission_classes=[IsWebsiteOwner, ])
+    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
+    def stats(self, request, *args, **kwargs):
+        response = {
+            "points_earned": 234,
+            "points_earned_txt": "Points Earned",
+            "sites_visited": 24,
+            "sites_visited_txt": "Sites Visited",
+            "views_received": 345,
+            "views_received_txt": "Views Received"
+        }
+        return Response(response)
+
+    @action(detail=True, methods=["get"], permission_classes=[IsWebsiteOwner, ])
+    def unpause(self, request, pk, *args, **kwargs):
+        website = self.get_object()
+        website.status = "A"
+        website.save()
+        return Response({"Success":"Website Activated"})
+
+    @action(detail=True, methods=["get"], permission_classes=[IsWebsiteOwner, ])
     def pause(self, request, pk, *args, **kwargs):
         website = self.get_object()
         website.status = "I"
